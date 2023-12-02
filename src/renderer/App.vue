@@ -1,32 +1,34 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import HelloWorld from './components/HelloWorld.vue'
 
+const drawer = ref(true);
+
 window.electronAPI.sendMessage('Hello from App.vue!');
+
+const menuItems = ref([
+  { title: 'Home', icon: 'mdi-account', link: '/' },
+  { title: 'Manage Users', icon: 'mdi-account', link: '/list-users' },
+  // Add other menu items here
+]);
 </script>
 
 <template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-</template>
+  <v-app>
+    <v-navigation-drawer app permanent>
+      <v-list>
+        <v-list-item v-for="(item, index) in menuItems" :key="index" :to="item.link" :prependIcon="item.icon">
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+    <v-app-bar app color="indigo" dark>
+      <v-toolbar-title>My Vue App</v-toolbar-title>
+    </v-app-bar>
+
+    <v-main>
+      <router-view></router-view>
+    </v-main>
+  </v-app>
+</template>

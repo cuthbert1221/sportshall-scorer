@@ -1,5 +1,6 @@
 import {app, BrowserWindow, ipcMain, session} from 'electron';
 import {join} from 'path';
+import { User } from '../interfaces';
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -49,3 +50,8 @@ app.on('window-all-closed', function () {
 ipcMain.on('message', (event, message) => {
   console.log(message);
 })
+
+ipcMain.on('create-user', (event, user: User) => {
+  // Handle user creation in SQLite database
+  console.log(user);
+});
