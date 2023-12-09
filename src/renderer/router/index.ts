@@ -1,7 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router';
 import HomePage from '../views/HomePage.vue';
-import UserManagementPage from '../views/UserManagementPage.vue';
-import Users from '../views/Users.vue';
+import AddParticipants from '../views/AddParticipants.vue';
+import ListParticipants from '../views/ListParticipants.vue';
+import ListEvents from '../views/ListEvents.vue';
+import AddEvents from '../views/AddEvent.vue';
 
 const routes = [
   {
@@ -10,20 +12,30 @@ const routes = [
     component: HomePage
   },
   {
-    path: '/create-user',
-    name: 'CreateUser',
-    component: UserManagementPage
+    path: '/add-participants',
+    name: 'AddParticipants',
+    component: AddParticipants
   },
   {
-    path: '/list-users',
-    name: 'Users',
-    component: Users
+    path: '/list-participants',
+    name: 'ListParticipants',
+    component: ListParticipants
+  },
+  {
+    path: '/list-events',
+    name: 'ListEvents',
+    component: ListEvents
+  },
+  {
+    path: '/add-event',
+    name: 'AddEvents',
+    component: AddEvents
   },
   // Additional routes for other components
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 });
 

@@ -1,34 +1,24 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import HelloWorld from './components/HelloWorld.vue'
-
-const drawer = ref(true);
+import Menu from 'primevue/menu';
+import LeftBar from './components/LeftBar.vue';
+import TopBar from './components/TopBar.vue';
 
 window.electronAPI.sendMessage('Hello from App.vue!');
 
-const menuItems = ref([
-  { title: 'Home', icon: 'mdi-account', link: '/' },
-  { title: 'Manage Users', icon: 'mdi-account', link: '/list-users' },
-  // Add other menu items here
-]);
 </script>
-
 <template>
-  <v-app>
-    <v-navigation-drawer app permanent>
-      <v-list>
-        <v-list-item v-for="(item, index) in menuItems" :key="index" :to="item.link" :prependIcon="item.icon">
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
+  
 
-    <v-app-bar app color="indigo" dark>
-      <v-toolbar-title>My Vue App</v-toolbar-title>
-    </v-app-bar>
-
-    <v-main>
-      <router-view></router-view>
-    </v-main>
-  </v-app>
+  <div class="min-h-screen flex relative lg:static surface-ground ">
+    <LeftBar />
+    <div class="min-h-screen flex flex-column relative flex-auto">
+        <TopBar />
+        <div class="p-5 flex flex-column flex-auto">
+            <div class="border-2 border-dashed surface-border border-round surface-section flex-auto">
+              <router-view />
+            </div>
+        </div>
+    </div>
+</div>
 </template>

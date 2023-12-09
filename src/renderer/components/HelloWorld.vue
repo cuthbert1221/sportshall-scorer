@@ -3,7 +3,7 @@
 </script>
 
 <template>
-<v-btn to="/create-user">
+<v-btn to="/create-participant">
   Button
 </v-btn>
 </template>

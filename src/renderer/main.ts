@@ -3,25 +3,41 @@ import './style.css';
 import App from './App.vue'
 import router from './router'
 
-// Vuetify
-import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import { createPinia } from 'pinia'
+const pinia = createPinia()
 
-import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
+import PrimeVue from 'primevue/config';
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
 
-const vuetify = createVuetify({
-  components,
-  directives,
-  icons: {
-    defaultSet: 'mdi',
-    aliases,
-    sets: {
-      mdi,
-    }
-  },
-})
 
-createApp(App).use(vuetify).use(router).mount('#app')
+import 'primeflex/primeflex.css';
+
+
+//import './assets/main.css'
+import 'primevue/resources/themes/saga-blue/theme.css';
+import 'primevue/resources/primevue.min.css';
+import 'primeicons/primeicons.css';    
+
+import BadgeDirective from 'primevue/badgedirective';
+import Ripple from 'primevue/ripple';
+import StyleClass from 'primevue/styleclass';
+import ToastService from 'primevue/toastservice';
+import Toast from 'primevue/toast';
+
+import './assets/custom.css'
+const app = createApp(App)
+app.use(pinia)
+app.use(PrimeVue, { ripple: true })
+app.use(ToastService);
+
+app.component('Button', Button)
+app.component('InputText', InputText)
+app.component('Toast', Toast);
+
+app.directive('badge', BadgeDirective);
+app.directive('ripple', Ripple);
+app.directive('styleclass', StyleClass);
+
+app.use(router)
+app.mount('#app')
