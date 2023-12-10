@@ -22,7 +22,7 @@
         </Column>
         <Column field="ageGroup" header="Age Group" style="min-width: 12rem">
           <template #body="{ data }">
-            {{ data.ageGroup }}
+            {{ data.agegroup }}
           </template>
           <template #filter="{ filterModel, filterCallback }">
             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by age group" />

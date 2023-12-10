@@ -150,7 +150,7 @@ async function openDatabase(): Promise<sqlite3.Database> {
 }
 
 async function insertParticipant(db: sqlite3.Database, participant: Participant): Promise<number> {
-  const sql = `INSERT INTO Participants (fullname, club, age, gender) VALUES (?, ?, ?, ?)`;
+  const sql = `INSERT INTO Participants (fullname, club, agegroup, gender) VALUES (?, ?, ?, ?)`;
   return new Promise((resolve, reject) => {
     db.run(sql, [participant.fullname, participant.club, participant.agegroup, participant.gender], function(err) {
       if (err) {
@@ -207,7 +207,7 @@ function createDatabase(): void {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           fullname TEXT NOT NULL,
           club TEXT NOT NULL,
-          age TEXT NOT NULL,
+          agegroup TEXT NOT NULL,
           gender TEXT NOT NULL
       );
   `;
