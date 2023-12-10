@@ -6,7 +6,10 @@ import { useToast } from 'primevue/usetoast';
 import { parseQuery } from 'vue-router';
 import { useVuelidate } from '@vuelidate/core';
 import { required, email } from '@vuelidate/validators';
-import {Participant} from '../../main/interfaces.js';
+import {Athlete} from '../../main/interfaces.js';
+import { useGenericStore } from '../stores/genericStore';
+const genericStore = useGenericStore()
+
 // Add more fields as needed
 const toast = useToast();
 declare global {
@@ -46,17 +49,17 @@ async function onSubmit(values: any) {
     if (!isFormCorrect) return
     
     //Json stringify and parse to remove reactive proxy
-    const participant = JSON.parse(JSON.stringify(state));
-    participant.club = participant.club.name; // Use the club name as a string
-    participant.agegroup = participant.agegroup.name; // Use the age name as a string
-    participant.gender = participant.gender.name; // Use the gender name as a string
+    const athlete = JSON.parse(JSON.stringify(state));
+    athlete.club = athlete.club.name; // Use the club name as a string
+    athlete.agegroup = athlete.agegroup.name; // Use the age name as a string
+    athlete.gender = athlete.gender.name; // Use the gender name as a string
 
-    const registration = await window.electronAPI.registerParticipant(participant);
+    const registration = await window.electronAPI.registerAthlete(athlete);
     
     if (typeof registration === 'number') {
         console.log(registration);
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Participant added, ID: ' + registration, life: 3000 });
-        console.log("Participant added");
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Athlete added, ID: ' + registration, life: 3000 });
+        console.log("Athlete added");
         loading.value = true;
         console.log(values);
         resetState();
@@ -66,14 +69,13 @@ async function onSubmit(values: any) {
     }
 }
 
-
 const loading = ref(false);
 
-const addParticipant = () => {
-    window.electronAPI.registerParticipant('Hello from 0.vue!');
-    console.log('addParticipant');
+const addAthlete = () => {
+    window.electronAPI.registerAthlete('Hello from 0.vue!');
+    console.log('addAthlete');
     loading.value = true;
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Participant added', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Athlete added', life: 3000 });
     setTimeout(() => {
         loading.value = false;
     }, 2000);
@@ -81,16 +83,8 @@ const addParticipant = () => {
 
 let clubs = ref([]);
 
-const genders = [
-    { name: 'Girl', code: 'G' },
-    { name: 'Boy', code: 'B' },
-]
-
-const ageGroups = [
-    { name: 'U11', code: 'U11' },
-    { name: 'U13', code: 'U13' },
-    { name: 'U15', code: 'U15' }
-]
+const genders = genericStore.genders
+const ageGroups = genericStore.ageGroups
 
 async function fetchData() {
     const result = await window.electronAPI.fetchData('clubs');
@@ -101,8 +95,8 @@ fetchData();
 </script>
 <template>
     <div class="surface-ground px-4 py-8 md:px-6 lg:px-8">
-        <div class="text-900 font-medium text-xl mb-3">Add Participant</div>
-        <p class="m-0 mb-4 p-0 text-600 line-height-3 mr-3">Register a new participant to get their unique ID, and be able to assign them an event</p>
+        <div class="text-900 font-medium text-xl mb-3">Add Athlete</div>
+        <p class="m-0 mb-4 p-0 text-600 line-height-3 mr-3">Register a new athlete to get their unique ID, and be able to assign them an event</p>
         <div class="surface-card p-4 shadow-2 border-round">
             <form v-on:submit.prevent="onSubmit" class="flex flex-column gap-2">
             <div class="grid formgrid p-fluid">
@@ -156,7 +150,7 @@ fetchData();
             <div class="field mb-1 col-12" v-if="state.gender && state.agegroup">Group: {{state.agegroup.name}}{{ state.gender.code }}</div>
         </div>
         <div class="col-12">
-            <Button type="submit" label="Add Participant" class="w-auto mt-3"></Button>
+            <Button type="submit" label="Add Athlete" class="w-auto mt-3"></Button>
         </div>
         </form>
         <Toast />

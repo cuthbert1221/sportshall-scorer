@@ -59,6 +59,16 @@
                   <span class="font-medium">Register Event</span>
                 </router-link>
               </li>
+              <li>
+                <router-link
+                  :to="{ name: 'ChangeEventOrder' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Event Order</span>
+                </router-link>
+              </li>
             </ul>
           </li>
         </ul>
@@ -81,7 +91,7 @@
             <ul class="list-none p-0 m-0 overflow-hidden">
               <li>
                 <router-link
-                  :to="{ name: 'AddParticipants' }"
+                  :to="{ name: 'AddAthletes' }"
                   v-ripple
                   class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
                 >
@@ -91,12 +101,12 @@
               </li>
               <li>
                 <router-link
-                  :to="{ name: 'AddParticipants' }"
+                  :to="{ name: 'AddAthletes' }"
                   v-ripple
                   class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
                 >
                   <i class="pi pi-plus mr-2"></i>
-                  <span class="font-medium">Set Participant Event</span>
+                  <span class="font-medium">Set Athlete Event</span>
                 </router-link>
               </li>
               <li>
@@ -111,12 +121,12 @@
               </li>
               <li>
                 <router-link
-                  :to="{ name: 'ViewParticipants' }"
+                  :to="{ name: 'ViewAthletes' }"
                   v-ripple
                   class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
                 >
                   <i class="pi pi-plus mr-2"></i>
-                  <span class="font-medium">View Participants</span>
+                  <span class="font-medium">View Athletes</span>
                 </router-link>
               </li>
             </ul>

@@ -5,7 +5,7 @@ const data = ref(null);
 
 const loadData = async () => {
   try {
-    const query = "SELECT * FROM participants";
+    const query = "SELECT * FROM athletes";
     const result = await window.electronAPI.readDataFromDb(query);
     data.value = result;
     console.log(data.value);

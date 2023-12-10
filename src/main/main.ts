@@ -1,6 +1,6 @@
 import {app, BrowserWindow, ipcMain, session} from 'electron';
 import {join} from 'path';
-import { Participant, EventDetails } from './interfaces.js';
+import { Athlete, EventDetails } from './interfaces.js';
 export interface EventInstances  {
   eventDetail_name: string;
   venue_name : string;
@@ -59,9 +59,9 @@ ipcMain.on('message', (event, message) => {
   console.log(message);
 })
 
-ipcMain.handle('create-participant', async (event, participant: Participant) => {
+ipcMain.handle('create-athlete', async (event, athlete: Athlete) => {
   // Handle user creation in SQLite database
-  const result = await addParticipant({ fullname: participant.fullname, club: participant.club, agegroup: participant.agegroup, gender: participant.gender });
+  const result = await addAthlete({ fullname: athlete.fullname, club: athlete.club, agegroup: athlete.agegroup, gender: athlete.gender });
   console.log("The result was: " + result);
   return result
 });
@@ -149,10 +149,10 @@ async function openDatabase(): Promise<sqlite3.Database> {
   });
 }
 
-async function insertParticipant(db: sqlite3.Database, participant: Participant): Promise<number> {
-  const sql = `INSERT INTO Participants (fullname, club, agegroup, gender) VALUES (?, ?, ?, ?)`;
+async function insertAthlete(db: sqlite3.Database, athlete: Athlete): Promise<number> {
+  const sql = `INSERT INTO Athletes (fullname, club, agegroup, gender) VALUES (?, ?, ?, ?)`;
   return new Promise((resolve, reject) => {
-    db.run(sql, [participant.fullname, participant.club, participant.agegroup, participant.gender], function(err) {
+    db.run(sql, [athlete.fullname, athlete.club, athlete.agegroup, athlete.gender], function(err) {
       if (err) {
         console.error(err.message);
         reject(err.message);
@@ -178,11 +178,11 @@ async function closeDatabase(db: sqlite3.Database): Promise<void> {
   });
 }
 
-async function addParticipant(participant: Participant): Promise<number | string> {
+async function addAthlete(athlete: Athlete): Promise<number | string> {
   let db: sqlite3.Database;
   try {
     db = await openDatabase();
-    const id = await insertParticipant(db, participant);
+    const id = await insertAthlete(db, athlete);
     await closeDatabase(db);
     return id;
   } catch (error) {
@@ -201,9 +201,9 @@ function createDatabase(): void {
       console.log('Connected to the SQLite database.');
   });
 
-  // SQL query to create the Participants table
-  const createParticipantsTableSql = `
-      CREATE TABLE IF NOT EXISTS Participants (
+  // SQL query to create the Athletes table
+  const createAthletesTableSql = `
+      CREATE TABLE IF NOT EXISTS Athletes (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           fullname TEXT NOT NULL,
           club TEXT NOT NULL,
@@ -222,13 +222,13 @@ function createDatabase(): void {
   `;
 
 
-  // Execute the Participants table creation query
-  db.run(createParticipantsTableSql, (err) => {
+  // Execute the Athletes table creation query
+  db.run(createAthletesTableSql, (err) => {
       if (err) {
           console.error(err.message);
           return;
       }
-      console.log("Participants table created or already exists.");
+      console.log("Athletes table created or already exists.");
   });
 
   // Execute the Events table creation query
@@ -318,6 +318,7 @@ function createDatabase(): void {
       venue_name TEXT NOT NULL,
       agegroup TEXT NOT NULL,
       gender TEXT NOT NULL,
+      display_order INTEGER,
       FOREIGN KEY (eventDetail_name) REFERENCES EventDetails (name)
     );
   `;
@@ -339,6 +340,42 @@ function createDatabase(): void {
   });
 }
 
+ipcMain.handle('update-multiple-events-order', async (event, eventsOrder) => {
+  // eventsOrder is an array of { eventId, newOrder }
+  // Start a transaction
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run('BEGIN TRANSACTION;');
+      var i = 0;
+      for (const eventOrder of eventsOrder) {
+        console.log(eventOrder);
+        console.log(eventOrder.id);
+        db.run(
+          `UPDATE EventInstances SET display_order = ? WHERE id = ?`,
+          [i, eventOrder.id],
+          (err) => {
+            if (err) {
+              console.error(err.message);
+              reject(err.message);
+            }
+          }
+        );
+        i++;
+      }
+      db.run('COMMIT;', (err) => {
+        if (err) {
+          reject(err.message);
+        } else {
+          resolve('success');
+        }
+      });
+    });
+  }).finally(() => {
+    closeDatabase(db);
+  });
+});
+
 
 ipcMain.handle('read-data', async (event, query) => {
   const db = new sqlite3.Database(DB_PATH);
@@ -356,12 +393,12 @@ ipcMain.handle('read-data', async (event, query) => {
 ipcMain.handle('fetch-data', async (event, type) => {
   const db = new sqlite3.Database(DB_PATH);
   let query = '';
-  if (type === 'participants') {
-    query = "SELECT * FROM Participants";
+  if (type === 'athletes') {
+    query = "SELECT * FROM Athletes";
   } else if (type === 'eventDetails') {
     query = "SELECT * FROM EventDetails";
   } else if (type === 'eventInstances') {
-    query = "SELECT * FROM EventInstances";
+    query = "SELECT * FROM EventInstances ORDER BY display_order";
   } else if (type === 'venues') {
     query = "SELECT * FROM venues";
   } else if (type === 'clubs') {

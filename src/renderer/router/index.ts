@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router';
 import HomePage from '../views/HomePage.vue';
-import AddParticipants from '../views/AddParticipants.vue';
-import ListParticipants from '../views/ListParticipants.vue';
+import AddAthletes from '../views/AddAthletes.vue';
+import ListAthletes from '../views/ListAthletes.vue';
 import ListEvents from '../views/ListEvents.vue';
 import AddEventDetail from '../views/AddEventDetail.vue';
 import AddEventInstance from '../views/AddEventInstance.vue';
 import ViewRegistrations from '../views/ViewRegistrations.vue';
-import ViewParticipants from '../views/ViewParticipants.vue';
+import ViewAthletes from '../views/ViewAthletes.vue';
+import ChangeEventOrder from '../views/ChangeEventOrder.vue';
 
 const routes = [
   {
@@ -15,14 +16,14 @@ const routes = [
     component: HomePage
   },
   {
-    path: '/add-participants',
-    name: 'AddParticipants',
-    component: AddParticipants
+    path: '/add-athletes',
+    name: 'AddAthletes',
+    component: AddAthletes
   },
   {
-    path: '/list-participants',
-    name: 'ListParticipants',
-    component: ListParticipants
+    path: '/list-athletes',
+    name: 'ListAthletes',
+    component: ListAthletes
   },
   {
     path: '/list-events',
@@ -45,9 +46,14 @@ const routes = [
     component: ViewRegistrations
   },
   {
-    path: '/view-participants',
-    name: 'ViewParticipants',
-    component: ViewParticipants
+    path: '/view-athletes',
+    name: 'ViewAthletes',
+    component: ViewAthletes
+  },
+  {
+    path: '/change-event-order',
+    name: 'ChangeEventOrder',
+    component: ChangeEventOrder
   },
   // Additional routes for other components
 ];

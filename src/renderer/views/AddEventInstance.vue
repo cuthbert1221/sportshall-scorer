@@ -80,6 +80,8 @@ import Dropdown from "primevue/dropdown";
 import { useToast } from "primevue/usetoast";
 import { useVuelidate } from "@vuelidate/core";
 import { required } from "@vuelidate/validators";
+import { useGenericStore } from '../stores/genericStore';
+const genericStore = useGenericStore()
 
 const toast = useToast();
 
@@ -101,15 +103,8 @@ const rules = {
 
 const v$ = useVuelidate(rules, state);
 
-const genders = [
-    { name: 'Girl', code: 'G' },
-    { name: 'Boy', code: 'B' },
-]
-const ageGroups = [
-  { name: "U11", code: "U11" },
-  { name: "U13", code: "U13" },
-  { name: "U15", code: "U15" },
-];
+const genders = genericStore.genders
+const ageGroups = genericStore.ageGroups
 
 const scoringMethods = [
   { name: "Highest Wins", code: "highest" },
@@ -123,7 +118,8 @@ async function onSubmit() {
   const event = JSON.parse(JSON.stringify(state));
   event.agegroup = event.agegroup.name; // Use the age group name as a string
   event.gender = event.gender.name; // Use the gender name as a string
-
+  event.eventDetail_name = event.eventDetail_name.name; // Use the event name as a string
+  event.venue_name = event.venue_name.name; // Use the venue name as a string
   const creation = await window.electronAPI.createEventInstance(event);
 
   if (typeof creation === "number") {

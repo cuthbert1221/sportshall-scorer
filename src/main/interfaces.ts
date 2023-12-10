@@ -1,5 +1,5 @@
 // interfaces.ts
-export interface Participant {
+export interface Athlete {
     fullname: string;
     club: string;
     agegroup: string;

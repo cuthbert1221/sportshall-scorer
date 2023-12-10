@@ -1,11 +1,11 @@
 /**
  * Should match main/preload.ts for typescript support in renderer
  */
-import {Participant, Event, EventDetails, EventInstances} from '../../main/interfaces.js';
+import {Athlete, Event, EventDetails, EventInstances} from '../../main/interfaces.js';
 
 export default interface ElectronApi {
   sendMessage: (message: string) => void,
-  registerParticipant: (participant: Participant) => Promise<any>,
+  registerAthlete: (athlete: Athlete) => Promise<any>,
   createEventDetail: (event: EventDetails) => Promise<any>,
   createEventInstance: (event: EventInstances) => Promise<any>,
   readDataFromDb: (query: string) => Promise<any>,

@@ -1,10 +1,10 @@
 import {contextBridge, ipcRenderer} from 'electron';
-import {Participant, EventInstances, EventDetails} from './interfaces.js';
+import {Athlete, EventInstances, EventDetails} from './interfaces.js';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   sendMessage: (message: string) => ipcRenderer.send('message', message),
-  registerParticipant: async (participant: Participant) => {
-    const result = await ipcRenderer.invoke('create-participant', participant);
+  registerAthlete: async (athlete: Athlete) => {
+    const result = await ipcRenderer.invoke('create-athlete', athlete);
     return result;
   },
   createEventDetail: async (event: EventDetails) => {
@@ -13,6 +13,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   createEventInstance: async (event: EventInstances) => {
     const result = await ipcRenderer.invoke('create-event-instance', event);
+    return result;
+  },
+  updateMultipleEventsOrder: async (event: EventInstances) => {
+    const result = await ipcRenderer.invoke('update-multiple-events-order', event);
     return result;
   },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),

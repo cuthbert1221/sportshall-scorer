@@ -1,17 +1,17 @@
 import { defineStore } from 'pinia';
 
-export const useParticipantsStore = defineStore('participantsStore', {
+export const useAthletesStore = defineStore('athletesStore', {
   state: () => ({
-    participants: [],
+    athletes: [],
   }),
   actions: {
-    async fetchParticipants() {
+    async fetchAthletes() {
       try {
-        const result = await window.electronAPI.fetchData('participants');
-        this.participants = result;
+        const result = await window.electronAPI.fetchData('athletes');
+        this.athletes = result;
       } catch (error) {
-        console.error('Error fetching participants:', error);
-        this.participants = [];
+        console.error('Error fetching athletes:', error);
+        this.athletes = [];
       }
     }
   }
