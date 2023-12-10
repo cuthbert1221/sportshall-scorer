@@ -17,15 +17,20 @@ export interface Venues {
     name: string;
     Date: string; 
   }
+
+export interface Clubs {
+    name: string;
+    Date: string; 
+  }
+
 export interface EventDetails {
     name: string;
     type: string;
     scoringMethod: string; 
   }
 export interface EventInstances  {
-  name: string;
-  eventDetail_id: number;
-  venue_id : number;
+  eventDetail_name: string;
+  venue_name : string;
   agegroup: string;
   gender: string;
 }

@@ -12,6 +12,7 @@
               v-model="state.name"
               @update:modelValue="v$.name.$touch"
             />
+            <small id="event-help">Enter the generic event name. eg. Long Jump</small>
             <div v-for="error of v$.name.$errors" :key="error.$uid">
               <small class="p-error" id="text-error">{{
                 error.$message
@@ -30,40 +31,6 @@
               @blur="v$.type.$touch"
             />
             <div v-for="error of v$.type.$errors" :key="error.$uid">
-              <small class="p-error" id="text-error">{{
-                error.$message
-              }}</small>
-            </div>
-          </div>
-          <div class="field mb-4 col-12">
-            <label for="agegroup" class="font-medium text-900">Age Group</label>
-            <Dropdown
-              id="agegroup"
-              v-model="state.agegroup"
-              :options="ageGroups"
-              optionLabel="name"
-              :filter="false"
-              placeholder="Select an age group"
-              @blur="v$.agegroup.$touch"
-            />
-            <div v-for="error of v$.agegroup.$errors" :key="error.$uid">
-              <small class="p-error" id="text-error">{{
-                error.$message
-              }}</small>
-            </div>
-          </div>
-          <div class="field mb-4 col-12">
-            <label for="gender" class="font-medium text-900">Gender</label>
-            <Dropdown
-              id="gender"
-              v-model="state.gender"
-              :options="genders"
-              optionLabel="name"
-              :filter="false"
-              placeholder="Select a gender"
-              @blur="v$.gender.$touch"
-            />
-            <div v-for="error of v$.gender.$errors" :key="error.$uid">
               <small class="p-error" id="text-error">{{
                 error.$message
               }}</small>
@@ -109,9 +76,7 @@ const toast = useToast();
 const initialState = {
   name: "",
   type: "",
-  agegroup: "",
-  scoringMethod: "",
-  gender: "",
+  scoringMethod: ""
 };
 
 const state = reactive({ ...initialState });
@@ -119,9 +84,7 @@ const state = reactive({ ...initialState });
 const rules = {
   name: { required }, // Matches state.name
   type: { required }, // Matches state.type
-  agegroup: { required }, // Matches state.agegroup
   scoringMethod: { required }, // Matches state.scoringMethod
-  gender: { required }, // Matches state.scoringMethod
 };
 
 const v$ = useVuelidate(rules, state);
@@ -129,16 +92,8 @@ const v$ = useVuelidate(rules, state);
 const types = [
   { name: "Track", code: "T" },
   { name: "Field", code: "F" },
-];
-
-const genders = [
-    { name: 'Girl', code: 'G' },
-    { name: 'Boy', code: 'B' },
-]
-const ageGroups = [
-  { name: "U11", code: "U11" },
-  { name: "U13", code: "U13" },
-  { name: "U15", code: "U15" },
+  { name: "Relay", code: "R" },
+  { name: "Paarluf ", code: "P" },
 ];
 
 const scoringMethods = [
@@ -151,12 +106,10 @@ async function onSubmit() {
   if (!isFormCorrect) return;
 
   const event = JSON.parse(JSON.stringify(state));
-  event.category = event.agegroup.cpde + event.gender.code // Set category correctly
   event.type = event.type.name; // Use the type name as a string
-  event.agegroup = event.agegroup.name; // Use the age group name as a string
-  event.gender = event.gender.name; // Use the gender name as a string
+  event.scoringMethod = event.scoringMethod.code; 
 
-  const creation = await window.electronAPI.createEvent(event);
+  const creation = await window.electronAPI.createEventDetail(event);
 
   if (typeof creation === "number") {
     toast.add({

@@ -92,11 +92,6 @@ const ageGroups = [
     { name: 'U15', code: 'U15' }
 ]
 
-const selectedClub = ref("");
-const selectedGender = ref("");
-const selectedAgeGroups = ref("");
-const fullname = ref("");
-
 async function fetchData() {
     const result = await window.electronAPI.fetchData('clubs');
     clubs.value = result.map((club: any) => ({ name: club.name, id: club.id }));
@@ -156,9 +151,9 @@ fetchData();
                 </div>
             </div> 
             <div class="surface-border border-top-1 opacity-50 mb-3 col-12"></div>
-            <div class="field mb-1 col-12" v-if="fullname">Athlete: {{fullname}}</div>
-            <div class="field mb-1 col-12" v-if="selectedClub">Club: {{selectedClub.name}}</div>
-            <div class="field mb-1 col-12" v-if="selectedGender && selectedAgeGroups">Group: {{selectedAgeGroups.name}}{{ selectedGender.code }}</div>
+            <div class="field mb-1 col-12" v-if="state.fullname">Athlete: {{state.fullname}}</div>
+            <div class="field mb-1 col-12" v-if="state.club">Club: {{state.club.name}}</div>
+            <div class="field mb-1 col-12" v-if="state.gender && state.agegroup">Group: {{state.agegroup.name}}{{ state.gender.code }}</div>
         </div>
         <div class="col-12">
             <Button type="submit" label="Add Participant" class="w-auto mt-3"></Button>

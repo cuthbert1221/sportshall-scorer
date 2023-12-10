@@ -7,7 +7,7 @@ export const useEventsStore = defineStore('eventsStore', {
   actions: {
     async fetchEvents() {
       try {
-        const result = await window.electronAPI.fetchData('events');
+        const result = await window.electronAPI.fetchData('eventDetails');
         this.events = result;
       } catch (error) {
         console.error('Error fetching events:', error);

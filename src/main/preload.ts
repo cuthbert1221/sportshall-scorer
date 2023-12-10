@@ -1,5 +1,5 @@
 import {contextBridge, ipcRenderer} from 'electron';
-import {Participant, Event} from './interfaces.js';
+import {Participant, EventInstances, EventDetails} from './interfaces.js';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   sendMessage: (message: string) => ipcRenderer.send('message', message),
@@ -7,8 +7,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('create-participant', participant);
     return result;
   },
-  createEvent: async (event: Event) => {
-    const result = await ipcRenderer.invoke('create-event', event);
+  createEventDetail: async (event: EventDetails) => {
+    const result = await ipcRenderer.invoke('create-event-detail', event);
+    return result;
+  },
+  createEventInstance: async (event: EventInstances) => {
+    const result = await ipcRenderer.invoke('create-event-instance', event);
     return result;
   },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),

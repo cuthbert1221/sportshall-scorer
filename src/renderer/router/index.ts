@@ -3,7 +3,10 @@ import HomePage from '../views/HomePage.vue';
 import AddParticipants from '../views/AddParticipants.vue';
 import ListParticipants from '../views/ListParticipants.vue';
 import ListEvents from '../views/ListEvents.vue';
-import AddEvents from '../views/AddEvent.vue';
+import AddEventDetail from '../views/AddEventDetail.vue';
+import AddEventInstance from '../views/AddEventInstance.vue';
+import ViewRegistrations from '../views/ViewRegistrations.vue';
+import ViewParticipants from '../views/ViewParticipants.vue';
 
 const routes = [
   {
@@ -27,9 +30,24 @@ const routes = [
     component: ListEvents
   },
   {
-    path: '/add-event',
-    name: 'AddEvents',
-    component: AddEvents
+    path: '/add-event-detail',
+    name: 'AddEventDetails',
+    component: AddEventDetail
+  },
+  {
+    path: '/add-event-instance',
+    name: 'AddEventInstances',
+    component: AddEventInstance
+  },
+  {
+    path: '/view-registraions',
+    name: 'ViewRegistrations',
+    component: ViewRegistrations
+  },
+  {
+    path: '/view-participants',
+    name: 'ViewParticipants',
+    component: ViewParticipants
   },
   // Additional routes for other components
 ];

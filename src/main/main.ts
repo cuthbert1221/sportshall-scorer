@@ -1,6 +1,12 @@
 import {app, BrowserWindow, ipcMain, session} from 'electron';
 import {join} from 'path';
-import { Participant, Event } from './interfaces.js';
+import { Participant, EventDetails } from './interfaces.js';
+export interface EventInstances  {
+  eventDetail_name: string;
+  venue_name : string;
+  agegroup: string;
+  gender: string;
+}
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -60,16 +66,16 @@ ipcMain.handle('create-participant', async (event, participant: Participant) => 
   return result
 });
 
-ipcMain.handle('create-event', async (event, form: Event) => {
-  // Handle user creation in SQLite database
-  const result = await addEvent({ name: form.name, agegroup: form.agegroup, type: form.type, scoringMethod: form.scoringMethod, gender: form.gender });
+ipcMain.handle('create-event-detail', async (event, form: EventDetails) => {
+  // Handle event creation in SQLite database
+  const result = await addEventDetail({ name: form.name, type: form.type, scoringMethod: form.scoringMethod });
   console.log("The result was: " + result);
   return result
 });
-async function addEvent(event: Event): Promise<number | string> {
+async function addEventDetail(event: EventDetails): Promise<number | string> {
   const db = await openDatabase();
   try {
-    const eventId = await insertEvent(db, event);
+    const eventId = await insertEventDetail(db, event);
     return eventId;
   } catch (error) {
     return error as string;
@@ -77,11 +83,10 @@ async function addEvent(event: Event): Promise<number | string> {
     await closeDatabase(db);
   }
 }
-
-async function insertEvent(db: sqlite3.Database, event: Event): Promise<number> {
-  const sql = `INSERT INTO Events (name, agegroup, type, scoringMethod, gender) VALUES (?, ?, ?, ?, ?, ?)`;
+async function insertEventDetail(db: sqlite3.Database, event: EventDetails): Promise<number> {
+  const sql = `INSERT INTO eventDetails (name, type, scoringMethod) VALUES (?, ?, ?)`;
   return new Promise((resolve, reject) => {
-    db.run(sql, [event.name, event.agegroup, event.type, event.scoringMethod, event.gender], function(err) {
+    db.run(sql, [event.name, event.type, event.scoringMethod], function(err) {
       if (err) {
         console.error(err.message);
         reject(err.message);
@@ -95,6 +100,39 @@ async function insertEvent(db: sqlite3.Database, event: Event): Promise<number> 
 
 import sqlite3 from 'sqlite3';
 
+ipcMain.handle('create-event-instance', async (event, form: EventInstances) => {
+  // Handle event instance creation in SQLite database
+  const result = await addEventInstance({ eventDetail_name: form.eventDetail_name, venue_name: form.venue_name, agegroup: form.agegroup, gender: form.gender });
+  console.log("The result was: " + result);
+  return result
+});
+
+async function addEventInstance(eventInstance: EventInstances): Promise<number | string> {
+  const db = await openDatabase();
+  try {
+    const eventId = await insertEventInstance(db, eventInstance);
+    return eventId;
+  } catch (error) {
+    return error as string;
+  } finally {
+    await closeDatabase(db);
+  }
+}
+
+async function insertEventInstance(db: sqlite3.Database, eventInstance: EventInstances): Promise<number> {
+  const sql = `INSERT INTO EventInstances (eventDetail_name, venue_name, agegroup, gender) VALUES (?, ?, ?, ?)`;
+  return new Promise((resolve, reject) => {
+    db.run(sql, [eventInstance.eventDetail_name, eventInstance.venue_name, eventInstance.agegroup, eventInstance.gender], function(err) {
+      if (err) {
+        console.error(err.message);
+        reject(err.message);
+      } else {
+        console.log(`A row has been inserted with rowid ${this.lastID}`);
+        resolve(this.lastID);
+      }
+    });
+  });
+}
 
 async function openDatabase(): Promise<sqlite3.Database> {
   return new Promise((resolve, reject) => {
@@ -112,7 +150,7 @@ async function openDatabase(): Promise<sqlite3.Database> {
 }
 
 async function insertParticipant(db: sqlite3.Database, participant: Participant): Promise<number> {
-  const sql = `INSERT INTO Participants (fullname, club, age, gender) VALUES (?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO Participants (fullname, club, age, gender) VALUES (?, ?, ?, ?)`;
   return new Promise((resolve, reject) => {
     db.run(sql, [participant.fullname, participant.club, participant.agegroup, participant.gender], function(err) {
       if (err) {
@@ -175,15 +213,12 @@ function createDatabase(): void {
   `;
 
   // SQL query to create the Events table
-  const createEventsTableSql = `
-    CREATE TABLE IF NOT EXISTS Events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        type TEXT NOT NULL,
-        agegroup TEXT NOT NULL,
-        gender TEXT NOT NULL,
-        scoringMethod TEXT NOT NULL
-    );
+  const createEventDetailsTableSql = `
+    CREATE TABLE IF NOT EXISTS EventDetails (
+      name TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      scoringMethod TEXT NOT NULL
+  );
   `;
 
 
@@ -197,7 +232,7 @@ function createDatabase(): void {
   });
 
   // Execute the Events table creation query
-  db.run(createEventsTableSql, (err) => {
+  db.run(createEventDetailsTableSql, (err) => {
       if (err) {
           console.error(err.message);
           return;
@@ -237,7 +272,63 @@ function createDatabase(): void {
           });
       });
   });
+  const createVenuesTableSql = `
+    CREATE TABLE IF NOT EXISTS Venues (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      date TEXT NOT NULL
+    );
+  `;
 
+  // Execute the Venues table creation query
+  db.run(createVenuesTableSql, (err) => {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+    console.log("Venues table created or already exists.");
+
+    // Array of venue names and dates
+    const venues = [
+      { name: 'Venue 1', date: '2022-01-01' },
+      { name: 'Venue 2', date: '2022-02-01' },
+      { name: 'Venue 3', date: '2022-03-01' },
+    ];
+
+    // SQL query to insert a venue into the Venues table
+    const insertVenueSql = `INSERT OR IGNORE INTO Venues (name, date) VALUES (?, ?)`;
+
+    // Iterate over the venues array and insert each venue into the Venues table
+    venues.forEach((venue) => {
+      db.run(insertVenueSql, [venue.name, venue.date], (err) => {
+        if (err) {
+          console.error(err.message);
+          return;
+        }
+        console.log(`Venue ${venue.name} inserted or already exists.`);
+      });
+    });
+  });
+
+
+  const createEventInstancesTableSql = `
+    CREATE TABLE IF NOT EXISTS EventInstances (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      eventDetail_name TEXT NOT NULL,
+      venue_name TEXT NOT NULL,
+      agegroup TEXT NOT NULL,
+      gender TEXT NOT NULL,
+      FOREIGN KEY (eventDetail_name) REFERENCES EventDetails (name)
+    );
+  `;
+
+  db.run(createEventInstancesTableSql, (err) => {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+    console.log("EventInstances table created or already exists.");
+  });
   // Close the database connection
   db.close((err) => {
       if (err) {
@@ -267,8 +358,12 @@ ipcMain.handle('fetch-data', async (event, type) => {
   let query = '';
   if (type === 'participants') {
     query = "SELECT * FROM Participants";
-  } else if (type === 'events') {
-    query = "SELECT * FROM Events";
+  } else if (type === 'eventDetails') {
+    query = "SELECT * FROM EventDetails";
+  } else if (type === 'eventInstances') {
+    query = "SELECT * FROM EventInstances";
+  } else if (type === 'venues') {
+    query = "SELECT * FROM venues";
   } else if (type === 'clubs') {
     query = "SELECT * FROM clubs";
   }
