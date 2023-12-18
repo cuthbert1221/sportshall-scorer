@@ -85,7 +85,11 @@ const filters = ref({
 });
 const loading = ref(true);
 const clubs = ref<string[]>([]);
-const genders = genericStore.genders
+const gendersObjects = genericStore.genders
+const genders: string[] = []
+for (var gender of gendersObjects) {
+  genders.push(gender.name as string);
+}
 const ageGroupsObjects = genericStore.ageGroups
 const ageGroups: string[] = []
 for (var ageGroup of ageGroupsObjects) {

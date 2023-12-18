@@ -55,6 +55,28 @@
               }}</small>
             </div>
           </div>
+          <div class="field mb-4 col-12">
+            <label for="scoringMethod" class="font-medium text-900"
+              >Number of Attempts</label
+            >
+            <InputNumber v-model="state.number_attempts" inputId="integeronly" showButtons :min="1" :max="10"/>
+            <div v-for="error of v$.number_attempts.$errors" :key="error.$uid">
+              <small class="p-error" id="text-error">{{
+                error.$message
+              }}</small>
+            </div>
+          </div>
+          <div class="field mb-4 col-12">
+            <label for="scoringMethod" class="font-medium text-900"
+              >Max Fraction Digits for Scoring</label
+            >
+            <InputNumber v-model="state.maxFractionDigits" inputId="integeronly" showButtons :min="0" :max="10"/>
+            <div v-for="error of v$.maxFractionDigits.$errors" :key="error.$uid">
+              <small class="p-error" id="text-error">{{
+                error.$message
+              }}</small>
+            </div>
+          </div>
         </div>
         <Button type="submit" label="Add Event" class="w-auto mt-3"></Button>
       </form>
@@ -70,13 +92,16 @@ import Dropdown from "primevue/dropdown";
 import { useToast } from "primevue/usetoast";
 import { useVuelidate } from "@vuelidate/core";
 import { required } from "@vuelidate/validators";
+import InputNumber from 'primevue/inputnumber';
 
 const toast = useToast();
 
 const initialState = {
   name: "",
   type: "",
-  scoringMethod: ""
+  scoringMethod: "",
+  number_attempts: 1,
+  maxFractionDigits: 0,
 };
 
 const state = reactive({ ...initialState });
@@ -85,6 +110,8 @@ const rules = {
   name: { required }, // Matches state.name
   type: { required }, // Matches state.type
   scoringMethod: { required }, // Matches state.scoringMethod
+  number_attempts: { required }, // Matches state.scoringMethod
+  maxFractionDigits: { required }, // Matches state.scoringMethod
 };
 
 const v$ = useVuelidate(rules, state);

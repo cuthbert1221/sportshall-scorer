@@ -8,6 +8,8 @@ import AddEventInstance from '../views/AddEventInstance.vue';
 import ViewRegistrations from '../views/ViewRegistrations.vue';
 import ViewAthletes from '../views/ViewAthletes.vue';
 import ChangeEventOrder from '../views/ChangeEventOrder.vue';
+import TeamSheet from '../views/TeamSheet.vue';
+import EnterResults from '../views/EnterResults.vue';
 
 const routes = [
   {
@@ -54,6 +56,16 @@ const routes = [
     path: '/change-event-order',
     name: 'ChangeEventOrder',
     component: ChangeEventOrder
+  },
+  {
+    path: '/teamsheet/:clubid',
+    name: 'TeamSheet',
+    component: TeamSheet
+  },
+  {
+    path: '/enter-reults/:eventid',
+    name: 'EnterResults',
+    component: EnterResults
   },
   // Additional routes for other components
 ];

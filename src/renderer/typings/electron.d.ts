@@ -10,6 +10,8 @@ export default interface ElectronApi {
   createEventInstance: (event: EventInstances) => Promise<any>,
   readDataFromDb: (query: string) => Promise<any>,
   fetchData: (query: string) => Promise<any>,
+  getEventSignupClub: (query: string) => Promise<any>,
+  rankTeamSheet: (query: string) => Promise<any>,
 }
 
 declare global {

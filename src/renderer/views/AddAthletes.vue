@@ -50,7 +50,7 @@ async function onSubmit(values: any) {
     
     //Json stringify and parse to remove reactive proxy
     const athlete = JSON.parse(JSON.stringify(state));
-    athlete.club = athlete.club.name; // Use the club name as a string
+    athlete.club = athlete.club.id; // Use the club name as a string
     athlete.agegroup = athlete.agegroup.name; // Use the age name as a string
     athlete.gender = athlete.gender.name; // Use the gender name as a string
 

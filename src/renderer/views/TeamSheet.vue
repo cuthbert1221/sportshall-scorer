@@ -1,0 +1,157 @@
+<template>
+    <div class="p-5">
+      <h1>Team Sheet for {{ teamId }}</h1>
+  
+      <form @submit.prevent="saveTeamSheet">
+        <div v-for="ageGroup in ageGroups" :key="ageGroup">
+          <h2>{{ ageGroup }}</h2>
+          
+          <div v-for="gender in genders" :key="gender">
+            <h3>{{ gender }}</h3>
+  
+            <Panel v-for="event in getEventsFor(ageGroup, gender)" :key="event.id" :header="event.eventDetail_name">
+              <div v-for="n in maxAthletes" :key="n" class="p-fluid">
+                <div class="p-field" v-if="n == 1 || event.signUps[n - 2] && event.signUps[n - 2].athlete_name">
+                  <label for="athlete">Athlete {{ String.fromCharCode(64 + n) }}</label>
+                  <Dropdown id="event"  v-model="event.signUps[n - 1]" :options="filterAthletes(teamId, gender, ageGroup, String.fromCharCode(64 + n))" optionLabel="athlete_name" :filter="true" filterBy="athlete_name" :showClear="true" placeholder="Select an Athlete" aria-describedby="dd-error">
+                    <template #option="slotProps">
+                        <div class="flex align-items-center">
+                            <div >{{slotProps.option.athlete_name}}</div>
+                
+                        </div>
+                    </template>
+                  
+                </Dropdown>
+                <div v-if="event.signUps[n - 1]"> 
+                  <div style="color: red;" v-if="event.signUps[n - 1] && event.signUps[n - 1].athlete_id && isAthleteSelectedTwice(event.signUps[n - 1].athlete_id, event.signUps) && n > 1">
+                    Warning: This athlete has been selected twice for this event.
+                </div>
+                </div>
+                            
+                </div>
+              </div>
+            </Panel>
+          </div>
+        </div>
+  
+        <Button label="Save Team Sheet" @click="saveTeamSheet"/>
+        <Toast />
+      </form>
+    </div>
+  </template>
+  
+<script setup lang="ts">
+import { ref } from 'vue';
+import Panel from 'primevue/panel';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+import { useRoute } from 'vue-router';
+import {Athlete} from '../../main/interfaces.js';
+import Dropdown from 'primevue/dropdown';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
+const route = useRoute();
+const teamId = ref(route.params.clubid);
+interface SignUp {
+  event_id: number;
+  athlete_id: number;
+  athlete_name: string;
+  athlete_type: string;
+  // Add other properties here
+}
+interface Event {
+  agegroup: string;
+  gender: string;
+  id: number;
+  eventDetail_name: string;
+  signUps: SignUp[];
+  // Add other properties here
+}
+const ageGroups = ref(['U11', 'U13', 'U15']); // Example age groups
+const genders = ref(['Girl', 'Boy']); // 'G' for Girls, 'B' for Boys
+const events = ref<Event[]>([]); // Will hold events data
+const athletes = ref<Athlete[]>([]); // Will hold events data
+
+const test = [ { "fullname": "Test", "id": 1 }, { "id": 2, "fullname": "Testing" } ]
+const value = ref({ "fullname": "Test", "id": 1 })
+
+// Fetch events from your database
+const fetchEvents = async () => {
+  const result = await window.electronAPI.fetchData('eventInstances');
+  var i = 0;
+  for (const event of result) {
+    const signups = await window.electronAPI.getEventSignupClub( event.id, teamId.value);
+    result[i].signUps = signups;
+    for (let n = 0; n < maxAthletes; n++){
+      if (result[i].signUps[n] == null){
+        result[i].signUps[n] = {athlete_id: 0, athlete_name: ""};
+      }
+    }
+    i++;
+  }
+  events.value = result
+  console.log(events.value);
+};
+
+fetchEvents();
+
+const fetchAthletes = async () => {
+  const result = await window.electronAPI.fetchData('athletes');
+  athletes.value = result;
+  console.log(athletes.value);
+};
+
+fetchAthletes();
+fetchEvents();
+
+const filterAthletes = (clubId: number, gender: string, ageGroup: string, athlete_type_letter: string) => {
+  return athletes.value
+    .filter(athlete => athlete.club == clubId && athlete.gender === gender && athlete.agegroup === ageGroup)
+    .map(({ id, fullname, athlete_type }) => ({ athlete_id: id, athlete_name: fullname, athlete_type: athlete_type_letter}));
+};
+
+const getEventsFor = (ageGroup: any, gender: any) => {
+    return events.value.filter(event => 
+    event.agegroup === ageGroup && event.gender === gender
+    );
+};
+const isAthleteSelectedTwice = (athleteId: number, signUps: SignUp[]) => {
+  if(!signUps[1] || !signUps[1].athlete_id) {
+    return false;
+  }
+  return signUps.filter(signUp => signUp.athlete_id === athleteId).length === 2;
+};
+
+const maxAthletes = 2; // Maximum number of athletes per event per club
+
+const saveTeamSheet = async () => {
+  console.log(events.value);
+  const resultDelete = await window.electronAPI.deleteEventSignupClub(1);
+  var save_error = false;
+  for (const event of events.value) {
+    for (const athleteId of event.signUps) {
+      console.log('Athlete ID:', athleteId);
+      if (athleteId && athleteId.athlete_id != 0){
+        try {
+          const insert = await window.electronAPI.createEventSignup(event.id, teamId.value, athleteId.athlete_id, athleteId.athlete_type);
+          console.log('Result:', insert);
+        }
+        catch (error) {
+          save_error = true;
+          console.error('Error inserting data:', error);
+          toast.add({ severity: 'error', summary: 'Error', detail: 'Error message: ' + error, life: 9000 });
+        }
+       
+      }
+    }
+  }
+  if (!save_error){
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Team Sheet saved"', life: 3000 });
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fully save, see above messages', life: 3000 });
+  }
+};
+
+</script>

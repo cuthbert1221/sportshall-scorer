@@ -69,6 +69,26 @@
                   <span class="font-medium">Event Order</span>
                 </router-link>
               </li>
+              <li>
+                <router-link
+                  :to="{ name: 'TeamSheet', params: { clubid: 1 } }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Team Sheet</span>
+                </router-link>
+              </li>
+              <li>
+                <router-link
+                  :to="{ name: 'EnterResults', params: { eventid: 1 } }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Enter Results</span>
+                </router-link>
+              </li>
             </ul>
           </li>
         </ul>

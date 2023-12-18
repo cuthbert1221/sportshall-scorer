@@ -23,10 +23,20 @@ export interface Clubs {
     Date: string; 
   }
 
+export interface EventSignup {
+    id: number;
+    event_id: number;
+    club_id: number;
+    athlete_id: number;
+    athlete_type: string;
+  }
+
 export interface EventDetails {
     name: string;
     type: string;
     scoringMethod: string; 
+    number_attempts: number;
+    maxFractionDigits: number;
   }
 export interface EventInstances  {
   eventDetail_name: string;
