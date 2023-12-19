@@ -358,11 +358,13 @@ function createDatabase(): void {
   const createEventAttemptsTableSql = `
     CREATE TABLE IF NOT EXISTS EventAttempts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      signup_id INTEGER NOT NULL,
+      athlete_id INTEGER NOT NULL,
+      event_id INTEGER NOT NULL,
       attempt_number INTEGER NOT NULL,
       result TEXT NOT NULL,
-      UNIQUE(signup_id, attempt_number),
-      FOREIGN KEY (signup_id) REFERENCES EventSignUps(id)
+      UNIQUE(event_id, athlete_id, attempt_number),
+      FOREIGN KEY (event_id) REFERENCES EventInstances(id),
+      FOREIGN KEY (athlete_id) REFERENCES Athletes(id)
     );
   `;
 
@@ -381,8 +383,9 @@ function createDatabase(): void {
       event_id INTEGER NOT NULL,
       athlete_id INTEGER NOT NULL,
       position INTEGER NOT NULL,
-      FOREIGN KEY (event_id) REFERENCES Events(id),
+      scoring_type String,
       FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
+      FOREIGN KEY (event_id) REFERENCES EventInstances(id),
       UNIQUE(athlete_id, event_id)
   );
   `;
@@ -394,6 +397,46 @@ function createDatabase(): void {
       return;
     }
     console.log("EventPositions table created or already exists.");
+  });
+
+  const createEventPoints = `
+  CREATE TABLE EventPoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    venue TEXT NOT NULL,
+    event_id INTEGER NOT NULL,
+    athlete_id INTEGER NOT NULL,
+    points INTEGER NOT NULL,
+    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
+    FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
+    UNIQUE(athlete_id, event_id)
+);`;
+
+  // Execute the EventAttempts table creation query
+  db.run(createEventPoints, (err) => {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+    console.log("EventPoints table created or already exists.");
+  });
+
+  const createRankingPoints = `
+  CREATE TABLE CategoryRankingPoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    venue TEXT NOT NULL,
+    category TEXT NOT NULL, -- e.g., U11B, U11G
+    club TEXT NOT NULL,
+    points INTEGER NOT NULL,
+    UNIQUE(venue, category, club)
+);`;
+
+  // Execute the EventAttempts table creation query
+  db.run(createRankingPoints, (err) => {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+    console.log("RankingPoints table created or already exists.");
   });
 
   // Close the database connection
@@ -599,11 +642,11 @@ ipcMain.handle('insert-event-signup', async (event, eventId, clubId, athleteId, 
     db.close();
   });
 });
-ipcMain.handle('create-event-attempt', async (event, signupId, attemptNumber, result) => {
+ipcMain.handle('create-event-attempt', async (event, athlete_id, event_id, attemptNumber, result) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
       db.run(
-        `INSERT INTO EventAttempts (signup_id, attempt_number, result) VALUES (?, ?, ?) ON CONFLICT(signup_id, attempt_number) DO UPDATE SET result = excluded.result`, [signupId, attemptNumber, result],
+        `INSERT INTO EventAttempts (athlete_id, event_id, attempt_number, result) VALUES (?, ?, ?, ?) ON CONFLICT(athlete_id, event_id, attempt_number) DO UPDATE SET result = excluded.result`, [athlete_id, event_id, attemptNumber, result],
         function (err) {
           if (err) {
             reject(err);
@@ -617,11 +660,28 @@ ipcMain.handle('create-event-attempt', async (event, signupId, attemptNumber, re
   });
 });
 
-ipcMain.handle('get-attempt-result-signup', async (event, signupId) => {
-  console.log("signupId: " + signupId);
+ipcMain.handle('delete-event-attempt', async (event, athlete_id, event_id, attemptNumber) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    db.all(`SELECT id, result, attempt_number FROM EventAttempts WHERE signup_id = ? ORDER BY attempt_number ASC`, [signupId],
+      db.run(
+        `DELETE FROM EventAttempts WHERE athlete_id = ? AND event_id = ? AND attempt_number = ?`, [athlete_id, event_id, attemptNumber],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.lastID);
+          }
+        }
+      );
+  }).finally(() => {
+    db.close();
+  });
+});
+
+ipcMain.handle('get-attempt-result-signup', async (event, athlete_id, event_id) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT id, result, attempt_number FROM EventAttempts WHERE athlete_id = ? AND event_id = ? ORDER BY attempt_number ASC`, [athlete_id, event_id],
       (err, rows) => {
         if (err) {
           reject(err);
@@ -640,37 +700,54 @@ ipcMain.handle('rankSignups', async (ipcEvent, eventId: number) => {
     await rankSignups(eventId);
     ipcEvent.sender.send('rankSignupsComplete');
 
-  });
+});
 
 async function rankSignups(eventId: number): Promise<any> {
-  // TODO: Implement this function Seee below for the old implementation
   // Delete all records in the EventPositions table with a specific eventId
   await deleteEventPosition(eventId);
-  // Fetch all signups for the event
-  // Fetch all signups for the event
-  const signups = await getEventSignup(eventId);
+  const event_details = await getEventDetails(eventId);
+  console.log("event_details: " + event_details);
+  const scoring_method = event_details.scoringMethod;
+  // Define a helper function to handle the ranking process
+  const handleRanking = async (signups: any[], scoring_athlete: string) => {
+    // For each signup, fetch all attempts and find the best attempt
+    const signupScores = await Promise.all(signups.map(async (signup: any) => {
+      const attempts = await getEventSignupAttempt(signup.athlete_id, eventId);
+      attempts.sort((a: any, b: any) => a.result - b.result);
+      /*if (signup.scoringMethod === 'highest') {
+        attempts.reverse();
+      }
+      */
+      return { signupId: signup.id, scores: attempts.map((a: any) => a.result) };
+    }));
 
-  // For each signup, fetch all attempts and find the best attempt
-  const signupScores = await Promise.all(signups.map(async (signup: any) => {
-    const attempts = await getEventSignupAttempt(signup.id);
-    attempts.sort((a: any, b: any) => a.result - b.result);
-    if (signup.scoringMethod === 'highest') {
-      attempts.reverse();
+    const rankedAthletes = rankEventAttempts(signupScores, scoring_method === "highest"); // Assuming higher scores are better
+    console.log(rankedAthletes);
+    for (const athlete of rankedAthletes) {
+      console.log(athlete);
+      const { athlete_id } = await getEventSignupUserID(athlete.signupId);
+      console.log("athlete_id: " + athlete_id);
+      console.log(athlete.scores.length)
+      if(await checkUserResultsExist(eventId, athlete_id)){
+        await createEventPosition({ eventId, athlete_id, position: athlete.position, scoring_type: scoring_athlete });
+      }
     }
-    return { signupId: signup.id, scores: attempts.map((a: any) => a.result) };
-  }));
+  };
 
-
-  const rankedAthletes = rankEventAttempts(signupScores, true); // Assuming higher scores are better
-  console.log(rankedAthletes);
-  for (const athlete of rankedAthletes) {
-    console.log(athlete);
-
-    const { athlete_id } = await getEventSignupUserID(athlete.signupId);
-    console.log("athlete_id: " + athlete_id);
-    await createEventPosition({ eventId, athlete_id, position: athlete.position });
+  // Fetch all signups for the event and handle the ranking process
+  console.log("scoring_type: " + event_details.type);
+  if (event_details.type == "Track") {
+    const signupsA = await getEventSignupTrack(eventId, "A");
+    await handleRanking(signupsA, "A");
+    const signupsB = await getEventSignupTrack(eventId, "B");
+    await handleRanking(signupsB, "B");
+  } else {
+    const signups = await getEventSignup(eventId);
+    await handleRanking(signups, "N/A");
   }
 }
+
+// Old implementation
 async function rankSignupsOld(eventId: number): Promise<any> {
 
   // Delete all records in the EventPositions table with a specific eventId
@@ -680,7 +757,7 @@ async function rankSignupsOld(eventId: number): Promise<any> {
 
   // For each signup, fetch all attempts and find the best attempt
   const signupScores = await Promise.all(signups.map(async (signup: any) => {
-    const attempts = await getEventSignupAttempt(signup.id);
+    const attempts = await getEventSignupAttempt(signup.id, 1);
     attempts.sort((a: any, b: any) => a.result - b.result);
     if (signup.scoringMethod === 'highest') {
       attempts.reverse();
@@ -720,7 +797,7 @@ for (let i = 0; i < signupScores.length; i++) {
   console.log("signupId for lookup: " + signupId);
   const { athlete_id } = await getEventSignupUserID(signupId);
   console.log("athlete_id: " + athlete_id);
-  await createEventPosition({ eventId, athlete_id, position: rank });
+  await createEventPosition({ eventId, athlete_id, position: rank, scoring_type: "Old" });
 }
 };
 
@@ -730,6 +807,39 @@ async function getEventSignup(eventId): Promise<any> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(`SELECT * FROM EventSignups WHERE event_id = ?`, [eventId],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as EventSignup[]);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+
+async function checkUserResultsExist(evnetID, user_id): Promise<boolean> {
+  const db = await openDatabase();
+  return new Promise<boolean>((resolve, reject) => {
+    db.get(`SELECT id FROM EventAttempts WHERE event_id = ? AND athlete_id = ?`, [evnetID, user_id], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row ? true : false);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+// Fetch all signups for a specific event
+async function getEventSignupTrack(eventId, type): Promise<any> {
+  console.log("eventId: " + eventId);
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM EventSignups WHERE event_id = ? AND athlete_type = ?`, [eventId, type],
       (err, rows) => {
         if (err) {
           reject(err);
@@ -761,13 +871,31 @@ async function getEventSignupUserID(signupId): Promise<any> {
   });
 }
 
-
-// Fetch all attempts for a specific signup
-async function getEventSignupAttempt(signupId): Promise<any> {
-  console.log("signupId: " + signupId);
+async function getEventDetails(eventInstanceId): Promise<any> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    db.all(`SELECT id, result, attempt_number FROM EventAttempts WHERE signup_id = ? ORDER BY attempt_number ASC`, [signupId],
+    db.get(`SELECT EventDetails.type, EventDetails.scoringMethod, EventInstances.venue_name as venue FROM EventDetails 
+            INNER JOIN EventInstances ON EventDetails.name = EventInstances.eventDetail_name 
+            WHERE EventInstances.id = ?`, [eventInstanceId],
+      (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+
+
+// Fetch all attempts for a specific signup
+async function getEventSignupAttempt(athlete_id, event_id): Promise<any> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT id, result, attempt_number FROM EventAttempts WHERE athlete_id = ? AND event_id = ? ORDER BY attempt_number ASC`, [athlete_id, event_id],
       (err, rows) => {
         if (err) {
           reject(err);
@@ -800,10 +928,10 @@ async function getEventAttempts(eventID): Promise<any> {
 }
 
 // Create a new record in the EventPositions table
-async function createEventPosition({ eventId, athlete_id, position }): Promise<void> {
+async function createEventPosition({ eventId, athlete_id, position, scoring_type }): Promise<void> {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
-    db.run('INSERT INTO EventPositions (event_id, athlete_id, position) VALUES (?, ?, ?)', [eventId, athlete_id, position], (err) => {
+    db.run('INSERT INTO EventPositions (event_id, athlete_id, position, scoring_type) VALUES (?, ?, ?, ?)', [eventId, athlete_id, position, scoring_type], (err) => {
       if (err) {
         reject(err);
       } else {
@@ -838,16 +966,19 @@ createDatabase();
 /// Scot
 
 function rankEventAttempts(eventAttempts, isHigherBetter = true) {
-  // Sort athletes based on their scores and isHigherBetter flag
-  eventAttempts.sort((a, b) => compareAthletes(a.scores, b.scores, isHigherBetter));
+  // Filter out athletes with no scores
+  const validAttempts = eventAttempts.filter(attempt => attempt.scores && attempt.scores.length > 0);
+
+  // Sort athletes based on their scores
+  validAttempts.sort((a, b) => compareAthletes(a.scores, b.scores, isHigherBetter));
 
   let currentRank = 1;
   let athletesInCurrentRank = 0;
 
-  eventAttempts.forEach((athlete, index) => {
+  validAttempts.forEach((attempt, index) => {
       if (index > 0) {
-          const prevAthlete = eventAttempts[index - 1];
-          if (compareAthletes(athlete.scores, prevAthlete.scores, isHigherBetter) !== 0) {
+          const prevAttempt = validAttempts[index - 1];
+          if (compareAthletes(attempt.scores, prevAttempt.scores, isHigherBetter) !== 0) {
               currentRank += athletesInCurrentRank;
               athletesInCurrentRank = 1;
           } else {
@@ -856,21 +987,125 @@ function rankEventAttempts(eventAttempts, isHigherBetter = true) {
       } else {
           athletesInCurrentRank = 1;
       }
-      athlete.position = currentRank;
+      attempt.position = currentRank;
   });
 
-  return eventAttempts;
+  return validAttempts;
 }
 
 function compareAthletes(aScores, bScores, isHigherBetter) {
-  // Convert string scores to numbers for comparison
-  const aNumScores = aScores.map(Number);
-  const bNumScores = bScores.map(Number);
+  const aBestScore = Math.max(...aScores.map(Number));
+  const bBestScore = Math.max(...bScores.map(Number));
 
-  for (let i = 0; i < Math.min(aNumScores.length, bNumScores.length); i++) {
-      if (aNumScores[i] !== bNumScores[i]) {
-          return isHigherBetter ? bNumScores[i] - aNumScores[i] : aNumScores[i] - bNumScores[i];
+  if (aBestScore !== bBestScore) {
+      return isHigherBetter ? bBestScore - aBestScore : aBestScore - bBestScore;
+  }
+
+  const sortedAScores = [...aScores].sort((x, y) => isHigherBetter ? y - x : x - y);
+  const sortedBScores = [...bScores].sort((x, y) => isHigherBetter ? y - x : x - y);
+
+  for (let i = 0; i < Math.min(sortedAScores.length, sortedBScores.length); i++) {
+      if (sortedAScores[i] !== sortedBScores[i]) {
+          return isHigherBetter ? sortedBScores[i] - sortedAScores[i] : sortedAScores[i] - sortedBScores[i];
       }
   }
-  return bNumScores.length - aNumScores.length; // More attempts ranks higher if scores are tied
+
+  return bScores.length - aScores.length;
 }
+
+// Create a new record in the EventPoints table
+async function createOrUpdateEventPoint({ eventId, athlete_id, points, venue }): Promise<void> {
+  const db = await openDatabase();
+  return new Promise<void>((resolve, reject) => {
+    db.run(`
+      INSERT INTO EventPoints (event_id, athlete_id, points, venue) 
+      VALUES (?, ?, ?, ?) 
+      ON CONFLICT(athlete_id, event_id) 
+      DO UPDATE SET points = ?, venue = ?
+    `, [eventId, athlete_id, points, venue, points, venue], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+interface RowCount {
+  count: number;
+}
+async function getClubCount(): Promise<number> {
+  const db = await openDatabase();
+  return new Promise<number>((resolve, reject) => {
+    db.get('SELECT COUNT(*) as count FROM Clubs', [], (err, row: RowCount) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row.count);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+async function getEventPositionsForEvents(eventId: number): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all('SELECT * FROM EventPositions WHERE event_id = ? ORDER BY position ASC', [eventId], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+// Assign scores to each position and write them to the EventPoints table
+async function eventPoints(eventId: number): Promise<void> {
+  // Retrieve all the eventPositions from the database
+  const eventPositions = await getEventPositionsForEvents(eventId);
+  const event_details = await getEventDetails(eventId);
+  const numClubs = await getClubCount();
+  const venue = event_details.venue;
+  let score = numClubs * 2;
+  if (event_details.type == "Track") {
+    assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue);
+  } 
+  else {
+    assignScoresAndWriteToEventPointsField(eventPositions, score, venue);
+  }
+}
+
+async function assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue) {
+  for (let position of eventPositions) {
+    // Assign score based on whether the athlete is A or B
+    if (position.scoring_type == "A") {
+      position.score = score - (position.position - 1) * 2;
+    } else if (position.scoring_type == "B") {
+      position.score = score - 1 - (position.position - 1) * 2;
+    }
+
+    // Write the score to EventPoints
+    createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue: venue});
+  }
+}
+async function assignScoresAndWriteToEventPointsField(eventPositions, score, venue) {
+  for (let position of eventPositions) {
+    position.score = score;
+    score -= 1
+    // Write the score to EventPoints
+    createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue: venue });
+  }
+}
+
+ipcMain.handle('scoreEvent', async (ipcEvent, eventId: number) => {
+  await eventPoints(eventId);
+  ipcEvent.sender.send('eventScored');
+
+});

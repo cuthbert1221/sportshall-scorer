@@ -19,8 +19,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('insert-event-signup', event, club, athlete, athlete_type);
     return result;
   },
-  createEventSignupAttempt: async (signupId, attemptNumber, score) => {
-    const result = await ipcRenderer.invoke('create-event-attempt', signupId, attemptNumber, score);
+  createEventSignupAttempt: async (athlete_id, event_id, attemptNumber, score) => {
+    const result = await ipcRenderer.invoke('create-event-attempt', athlete_id, event_id, attemptNumber, score);
+    return result;
+  },
+  deleteEventSignupAttempt: async (athlete_id, event_id, attemptNumber) => {
+    const result = await ipcRenderer.invoke('delete-event-attempt', athlete_id, event_id, attemptNumber);
     return result;
   },
   deleteEventSignupClub: async (club: number) => {
@@ -35,8 +39,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('get-event-signups', event);
     return result;
   },
-  getEventSignupAttempt: async (signup_id) => {
-    const result = await ipcRenderer.invoke('get-attempt-result-signup', signup_id);
+  getEventSignupAttempt: async (athlete_id, event_id) => {
+    const result = await ipcRenderer.invoke('get-attempt-result-signup', athlete_id, event_id);
     return result;
   },
   updateMultipleEventsOrder: async (event: EventInstances) => {
@@ -45,6 +49,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   rankSignups: async (eventID) => {
     const result = await ipcRenderer.invoke('rankSignups', eventID);
+    return result;
+  },
+  scoreEvent: async (eventID) => {
+    const result = await ipcRenderer.invoke('scoreEvent', eventID);
     return result;
   },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),
