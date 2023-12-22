@@ -5,11 +5,14 @@ import ListAthletes from '../views/ListAthletes.vue';
 import ListEvents from '../views/ListEvents.vue';
 import AddEventDetail from '../views/AddEventDetail.vue';
 import AddEventInstance from '../views/AddEventInstance.vue';
-import ViewRegistrations from '../views/ViewRegistrations.vue';
 import ViewAthletes from '../views/ViewAthletes.vue';
 import ChangeEventOrder from '../views/ChangeEventOrder.vue';
 import TeamSheet from '../views/TeamSheet.vue';
 import EnterResults from '../views/EnterResults.vue';
+import PickEnterResults from '../views/PickEnterResults.vue';
+import PickTeamSheet from '../views/PickTeamSheet.vue';
+import Venues from '../views/Venues.vue';
+import ViewResults from '../views/ViewResults.vue';
 
 const routes = [
   {
@@ -43,11 +46,6 @@ const routes = [
     component: AddEventInstance
   },
   {
-    path: '/view-registraions',
-    name: 'ViewRegistrations',
-    component: ViewRegistrations
-  },
-  {
     path: '/view-athletes',
     name: 'ViewAthletes',
     component: ViewAthletes
@@ -66,6 +64,26 @@ const routes = [
     path: '/enter-reults/:eventid',
     name: 'EnterResults',
     component: EnterResults
+  },
+  {
+    path: '/event-list',
+    name: 'PickEnterResults',
+    component: PickEnterResults
+  },
+  {
+    path: '/club-list',
+    name: 'PickTeamSheet',
+    component: PickTeamSheet
+  },
+  {
+    path: '/venues',
+    name: 'Venues',
+    component: Venues
+  },
+  {
+    path: '/view-results',
+    name: 'ViewResults',
+    component: ViewResults
   },
   // Additional routes for other components
 ];

@@ -68,7 +68,7 @@
           </div>
           <div class="field mb-4 col-12">
             <label for="scoringMethod" class="font-medium text-900"
-              >Max Fraction Digits for Scoring</label
+              >Max Decimal Places for Scoring</label
             >
             <InputNumber v-model="state.maxFractionDigits" inputId="integeronly" showButtons :min="0" :max="10"/>
             <div v-for="error of v$.maxFractionDigits.$errors" :key="error.$uid">
@@ -101,7 +101,7 @@ const initialState = {
   type: "",
   scoringMethod: "",
   number_attempts: 1,
-  maxFractionDigits: 0,
+  maxFractionDigits: 2,
 };
 
 const state = reactive({ ...initialState });

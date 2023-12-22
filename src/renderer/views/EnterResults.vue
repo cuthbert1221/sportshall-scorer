@@ -24,6 +24,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { useRoute } from 'vue-router';
+import { useEventsStore } from '../stores/eventsStore';
+const eventsStore = useEventsStore();
 
 const route = useRoute();
 
@@ -31,7 +33,7 @@ const event = ref({name: 'Event 1'}); // Populate with event data from EventDeta
 const athletes = ref([]); // Populate with athlete data from EventSignUps
 const maxAttempts = ref(3); // Assuming 3 attempts per athlete
 const event_id = ref(route.params.eventid);
-const fetchEvents = async () => {
+const fetchEventDetails = async () => {
   const signups = await window.electronAPI.getEventSignup(event_id.value);
   for (let i = 0; i < signups.length; i++) {
     const signup = signups[i];
@@ -52,7 +54,7 @@ const fetchEvents = async () => {
   athletes.value = signups;
 };
 
-fetchEvents();
+fetchEventDetails();
 
 const typeAAthletes = () => {
   return athletes.value.filter(athlete => athlete.athlete_type === 'A');
@@ -90,7 +92,7 @@ const onCellEditComplete = async (event) => {
           console.log('not number');
           // Should delete the attempt...
           let attempts = await window.electronAPI.deleteEventSignupAttempt(data.athlete_id, event_id.value, parseInt(attempt_number) + 1);
-          data.attempts[attempt_number].result = "N/A";
+          data.attempts[attempt_number].result = "";
         } 
       } else {
         if (newValue && newValue.length > 0) data[field] = newValue;

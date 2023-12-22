@@ -24,12 +24,14 @@ import Ripple from 'primevue/ripple';
 import StyleClass from 'primevue/styleclass';
 import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';
+import ConfirmationService from 'primevue/confirmationservice';
 
 import './assets/custom.css'
 const app = createApp(App)
 app.use(pinia)
 app.use(PrimeVue, { ripple: true })
 app.use(ToastService);
+app.use(ConfirmationService);
 
 app.component('Button', Button)
 app.component('InputText', InputText)

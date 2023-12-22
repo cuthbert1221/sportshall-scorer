@@ -13,6 +13,9 @@
       </div>
       <div class="overflow-y-auto mt-3">
         <ul class="list-none p-3 m-0">
+          <li class="p-2">
+            <Dropdown v-model="selectedVenue" :options="venues" optionLabel="name" placeholder="Select a Venue" class="w-full md:w-14rem" @update:modelValue="setVenue" />
+          </li>
           <li>
             <router-link
               :to="{ name: 'Home' }"
@@ -81,12 +84,42 @@
               </li>
               <li>
                 <router-link
+                  :to="{ name: 'PickTeamSheet' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Club List</span>
+                </router-link>
+              </li>
+              <li>
+                <router-link
+                  :to="{ name: 'PickEnterResults' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Event List</span>
+                </router-link>
+              </li>
+              <li>
+                <router-link
                   :to="{ name: 'EnterResults', params: { eventid: 1 } }"
                   v-ripple
                   class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
                 >
                   <i class="pi pi-plus mr-2"></i>
                   <span class="font-medium">Enter Results</span>
+                </router-link>
+              </li>
+              <li>
+                <router-link
+                  :to="{ name: 'Venues' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Venues</span>
                 </router-link>
               </li>
             </ul>
@@ -117,26 +150,6 @@
                 >
                   <i class="pi pi-plus mr-2"></i>
                   <span class="font-medium">Add Athlete</span>
-                </router-link>
-              </li>
-              <li>
-                <router-link
-                  :to="{ name: 'AddAthletes' }"
-                  v-ripple
-                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
-                >
-                  <i class="pi pi-plus mr-2"></i>
-                  <span class="font-medium">Set Athlete Event</span>
-                </router-link>
-              </li>
-              <li>
-                <router-link
-                  :to="{ name: 'ViewRegistrations' }"
-                  v-ripple
-                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
-                >
-                  <i class="pi pi-plus mr-2"></i>
-                  <span class="font-medium">View Registrations</span>
                 </router-link>
               </li>
               <li>
@@ -195,6 +208,25 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import Dropdown from "primevue/dropdown";
+import { useEventsStore } from '../stores/eventsStore';
+
+const eventsStore = useEventsStore();
+const venues = ref([]);
+const selectedVenue = ref([]);
+
+async function setVenue(venue_name: string) {
+  console.log(venue_name.name);
+  eventsStore.setVenueName(venue_name.name)
+}
+onMounted(async () => {
+  const result = await window.electronAPI.fetchData('venues');
+  venues.value = result.map((venue: any) => ({ name: venue.name }));
+});
+</script>
 <style>
 li a {
   text-decoration: none;

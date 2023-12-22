@@ -1,6 +1,6 @@
 <template>
     <div class="p-5">
-      <h1>Team Sheet for {{ teamId }}</h1>
+      <h1>Team Sheet for {{ club }}</h1>
   
       <form @submit.prevent="saveTeamSheet">
         <div v-for="ageGroup in ageGroups" :key="ageGroup">
@@ -17,10 +17,8 @@
                     <template #option="slotProps">
                         <div class="flex align-items-center">
                             <div >{{slotProps.option.athlete_name}}</div>
-                
                         </div>
                     </template>
-                  
                 </Dropdown>
                 <div v-if="event.signUps[n - 1]"> 
                   <div style="color: red;" v-if="event.signUps[n - 1] && event.signUps[n - 1].athlete_id && isAthleteSelectedTwice(event.signUps[n - 1].athlete_id, event.signUps) && n > 1">
@@ -41,7 +39,7 @@
   </template>
   
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import Panel from 'primevue/panel';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -49,6 +47,8 @@ import { useRoute } from 'vue-router';
 import {Athlete} from '../../main/interfaces.js';
 import Dropdown from 'primevue/dropdown';
 import { useToast } from 'primevue/usetoast';
+import { useEventsStore } from '../stores/eventsStore';
+const eventsStore = useEventsStore();
 
 const toast = useToast();
 const route = useRoute();
@@ -73,12 +73,15 @@ const genders = ref(['Girl', 'Boy']); // 'G' for Girls, 'B' for Boys
 const events = ref<Event[]>([]); // Will hold events data
 const athletes = ref<Athlete[]>([]); // Will hold events data
 
+const club = ref(""); // Will hold events data
 const test = [ { "fullname": "Test", "id": 1 }, { "id": 2, "fullname": "Testing" } ]
 const value = ref({ "fullname": "Test", "id": 1 })
 
 // Fetch events from your database
 const fetchEvents = async () => {
-  const result = await window.electronAPI.fetchData('eventInstances');
+  //const result = await eventsStore.events;
+  //const result = await window.electronAPI.fetchData('eventInstances');
+  const result = await window.electronAPI.getEvents(eventsStore.venue_name)
   var i = 0;
   for (const event of result) {
     const signups = await window.electronAPI.getEventSignupClub( event.id, teamId.value);
@@ -95,6 +98,8 @@ const fetchEvents = async () => {
 };
 
 fetchEvents();
+// Watch for changes in eventsStore.venue_name
+watch(() => eventsStore.venue_name, fetchEvents);
 
 const fetchAthletes = async () => {
   const result = await window.electronAPI.fetchData('athletes');
@@ -154,4 +159,17 @@ const saveTeamSheet = async () => {
   }
 };
 
+const setClub = async () => {
+  const result = await window.electronAPI.fetchData('clubs');
+  for (const club_data of result) {
+    if (club_data.id == teamId.value){
+      console.log(club_data.name);
+      club.value = club_data.name;
+      }
+  }
+}
+onMounted(() => {
+  setClub();
+  eventsStore.fetchEvents();
+});
 </script>

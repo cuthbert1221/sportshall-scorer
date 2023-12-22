@@ -15,7 +15,7 @@
         <Toast />
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import OrderList from "primevue/orderlist";
 import { useEventsStore } from '../stores/eventsStore';
 import { useToast } from 'primevue/usetoast';
@@ -32,9 +32,17 @@ async function saveChanges(event: any) {
     }
     console.log(creation);
 }
-  
+
+// Watch for changes in eventsStore.venue_name
+
 const eventsStore = useEventsStore();
-  
+
+const fetchEvents = async () => {
+    eventsStore.fetchEvents();
+}
+
+watch(() => eventsStore.venue_name, fetchEvents);
+
 onMounted(() => {
 eventsStore.fetchEvents();
 });

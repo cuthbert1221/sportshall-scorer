@@ -570,6 +570,29 @@ ipcMain.handle('get-event-signups', async (event, eventId) => {
   });
 });
 
+ipcMain.handle('get-events', async (event, venue) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT EventInstances.*, EventDetails.*
+      FROM EventInstances 
+      INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
+      WHERE EventInstances.venue_name = ? 
+      ORDER BY EventInstances.display_order`,
+      [venue],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+
 ipcMain.handle('delete-event-signups-club', async (event, clubId) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
@@ -677,6 +700,63 @@ ipcMain.handle('delete-event-attempt', async (event, athlete_id, event_id, attem
     db.close();
   });
 });
+
+
+ipcMain.handle('create-venue', async (event, { name, date }) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO Venues (name, date) VALUES (?, ?)`, [name, date],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+
+ipcMain.handle('update-venue', async (event, { id, name, date }) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE Venues SET name = ?, date = ? WHERE id = ?`, [name, date, id],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+
+ipcMain.handle('delete-venue', async (event, id ) => {
+  console.log("id: " + id);
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.run(
+      `DELETE FROM Venues WHERE id = ?`, [id],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+
 
 ipcMain.handle('get-attempt-result-signup', async (event, athlete_id, event_id) => {
   const db = await openDatabase();

@@ -39,6 +39,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('get-event-signups', event);
     return result;
   },
+  getEvents: async (venue: string) => {
+    const result = await ipcRenderer.invoke('get-events', venue);
+    return result;
+  },
   getEventSignupAttempt: async (athlete_id, event_id) => {
     const result = await ipcRenderer.invoke('get-attempt-result-signup', athlete_id, event_id);
     return result;
@@ -55,6 +59,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('scoreEvent', eventID);
     return result;
   },
+  createVenue: async (venue) => {
+    const result = await ipcRenderer.invoke('create-venue', venue);
+    return result;
+  },
+  updateVenue: async (venue) => {
+    const result = await ipcRenderer.invoke('update-venue', venue);
+    return result;
+  },
+  deleteVenue: async (venue) => {
+    const result = await ipcRenderer.invoke('delete-venue', venue);
+    return result;
+  },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),
-  fetchData: (type) => ipcRenderer.invoke('fetch-data', type)
+    fetchData: (type) => ipcRenderer.invoke('fetch-data', type)
 })

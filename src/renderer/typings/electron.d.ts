@@ -11,6 +11,7 @@ export default interface ElectronApi {
   readDataFromDb: (query: string) => Promise<any>,
   fetchData: (query: string) => Promise<any>,
   getEventSignupClub: (query: string) => Promise<any>,
+  getEvents: (query: string) => Promise<any>,
   rankTeamSheet: (query: string) => Promise<any>,
 }
 
