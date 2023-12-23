@@ -1643,3 +1643,47 @@ async function athleteTotalVenueScore(athleteId, venue) {
     db.close();
   });
 }
+
+async function clubsTotalVenue(venue) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT SUM(points) as total_score 
+       FROM EventPoints 
+       WHERE athlete_id = ? AND venue = ?`,
+      [venue],
+      (err, row: ScoreRow | undefined) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row ? row.total_score : 0);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getClubsTotalVenue(venue) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT Athletes.club, SUM(EventPoints.points) as total_points
+       FROM EventPoints
+       JOIN Athletes ON EventPoints.athlete_id = Athletes.id
+       WHERE EventPoints.venue = ?
+       GROUP BY Athletes.club
+       ORDER BY total_points DESC`,
+      [venue],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
