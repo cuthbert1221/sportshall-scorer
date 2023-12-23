@@ -15,12 +15,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('create-event-instance', event);
     return result;
   },
-  createEventSignup: async (event: number, club: number, athlete: number, athlete_type) => {
-    const result = await ipcRenderer.invoke('insert-event-signup', event, club, athlete, athlete_type);
+  createEventSignup: async (event: number, club: number, athlete: number, athlete_type, relay) => {
+    const result = await ipcRenderer.invoke('insert-event-signup', event, club, athlete, athlete_type, relay);
     return result;
   },
   createEventSignupAttempt: async (athlete_id, event_id, attemptNumber, score) => {
     const result = await ipcRenderer.invoke('create-event-attempt', athlete_id, event_id, attemptNumber, score);
+    return result;
+  },
+  createEventRelaySignupAttempt: async (club_id, event_id, score) => {
+    const result = await ipcRenderer.invoke('create-event-relay-attempt', club_id, event_id, score);
     return result;
   },
   deleteEventSignupAttempt: async (athlete_id, event_id, attemptNumber) => {
@@ -41,6 +45,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getEvents: async (venue: string) => {
     const result = await ipcRenderer.invoke('get-events', venue);
+    return result;
+  },
+  getEventsDefaultOrder: async (venue: string) => {
+    const result = await ipcRenderer.invoke('get-events-default-order', venue);
+    return result;
+  },
+  getEvent: async (event: number) => {
+    const result = await ipcRenderer.invoke('get-event', event);
     return result;
   },
   getEventSignupAttempt: async (athlete_id, event_id) => {
@@ -69,6 +81,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   deleteVenue: async (venue) => {
     const result = await ipcRenderer.invoke('delete-venue', venue);
+    return result;
+  },
+  getRelayClubs: async (event) => {
+    const result = await ipcRenderer.invoke('get-relay-signup', event);
+    return result;
+  },
+  getAthleteScoreVenue: async (athlete_id, venue) => {
+    const result = await ipcRenderer.invoke('get-athlete-total-score-venue', athlete_id, venue);
     return result;
   },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),

@@ -16,6 +16,16 @@ export const useEventsStore = defineStore('eventsStore', {
         this.events = [];
       }
     }, 
+    async resetOrder() {
+      try {
+        //const result = await window.electronAPI.fetchData('eventInstances');
+        const result = await window.electronAPI.getEventsDefaultOrder(this.venue_name);
+        this.events = result;
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        this.events = [];
+      }
+    }, 
     setVenueName(venue_name: string) {
       this.venue_name = venue_name;
     }

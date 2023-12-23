@@ -12,6 +12,8 @@
       </tr>
             </template>
         </OrderList>
+        <br />
+        <Button class="ml-7" label="Reset to Default" @click="resetToDefault" />
         <Toast />
 </template>
 <script setup lang="ts">
@@ -39,6 +41,14 @@ const eventsStore = useEventsStore();
 
 const fetchEvents = async () => {
     eventsStore.fetchEvents();
+}
+
+const resetToDefault = async () => {
+    eventsStore.resetOrder();
+    let event_tmp = {};
+    event_tmp.value = eventsStore.events
+    console.log(event_tmp);
+    saveChanges(event_tmp);
 }
 
 watch(() => eventsStore.venue_name, fetchEvents);

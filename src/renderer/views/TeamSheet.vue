@@ -10,8 +10,8 @@
             <h3>{{ gender }}</h3>
   
             <Panel v-for="event in getEventsFor(ageGroup, gender)" :key="event.id" :header="event.eventDetail_name">
-              <div v-for="n in maxAthletes" :key="n" class="p-fluid">
-                <div class="p-field" v-if="n == 1 || event.signUps[n - 2] && event.signUps[n - 2].athlete_name">
+              <div v-for="n in event.clubMaxAthletes" :key="n" class="p-fluid">
+                <div class="p-field" v-if="n == 1 || (event.signUps[n - 2] && event.signUps[n - 2].athlete_name) || event.type == 'Relay'">
                   <label for="athlete">Athlete {{ String.fromCharCode(64 + n) }}</label>
                   <Dropdown id="event"  v-model="event.signUps[n - 1]" :options="filterAthletes(teamId, gender, ageGroup, String.fromCharCode(64 + n))" optionLabel="athlete_name" :filter="true" filterBy="athlete_name" :showClear="true" placeholder="Select an Athlete" aria-describedby="dd-error">
                     <template #option="slotProps">
@@ -20,14 +20,19 @@
                         </div>
                     </template>
                 </Dropdown>
-                <div v-if="event.signUps[n - 1]"> 
-                  <div style="color: red;" v-if="event.signUps[n - 1] && event.signUps[n - 1].athlete_id && isAthleteSelectedTwice(event.signUps[n - 1].athlete_id, event.signUps) && n > 1">
-                    Warning: This athlete has been selected twice for this event.
-                </div>
-                </div>
+                <div v-if="event.signUps[n - 1] && event.type != 'Relay'"> 
+  <div style="color: red;" v-if="event.signUps[n - 1]?.athlete_id && isAthleteSelectedTwice(event.signUps[n - 1]?.athlete_id, event.signUps, n) && n > 1">
+    Warning: This athlete has been selected twice for this event.
+  </div>
+</div>
+
                             
                 </div>
+                
               </div>
+              <div style="color: red;" v-if="isAthleteListedTwice(event.signUps) && event.type == 'Relay'">
+    Warning: Athlete selected mutiple times for relay
+  </div>
             </Panel>
           </div>
         </div>
@@ -66,6 +71,7 @@ interface Event {
   id: number;
   eventDetail_name: string;
   signUps: SignUp[];
+  clubMaxAthletes: number;
   // Add other properties here
 }
 const ageGroups = ref(['U11', 'U13', 'U15']); // Example age groups
@@ -121,12 +127,29 @@ const getEventsFor = (ageGroup: any, gender: any) => {
     event.agegroup === ageGroup && event.gender === gender
     );
 };
-const isAthleteSelectedTwice = (athleteId: number, signUps: SignUp[]) => {
+const isAthleteSelectedTwice = (athleteId: number, signUps: SignUp[], n) => {
+  if (!athleteId) return false;
   if(!signUps[1] || !signUps[1].athlete_id) {
     return false;
   }
-  return signUps.filter(signUp => signUp.athlete_id === athleteId).length === 2;
+  return signUps.filter(signUp => signUp.athlete_id === athleteId).length >= 2;
 };
+
+function isAthleteListedTwice(athletes: (Athlete | null)[]): boolean {
+    const seenAthleteIds = new Set<number>();
+
+    for (const athlete of athletes) {
+        if (athlete && athlete.athlete_id) {
+            if (seenAthleteIds.has(athlete.athlete_id)) {
+                return true; // Duplicate found
+            }
+            seenAthleteIds.add(athlete.athlete_id);
+        }
+    }
+
+    return false; // No duplicates
+}
+
 
 const maxAthletes = 2; // Maximum number of athletes per event per club
 
@@ -139,7 +162,7 @@ const saveTeamSheet = async () => {
       console.log('Athlete ID:', athleteId);
       if (athleteId && athleteId.athlete_id != 0){
         try {
-          const insert = await window.electronAPI.createEventSignup(event.id, teamId.value, athleteId.athlete_id, athleteId.athlete_type);
+          const insert = await window.electronAPI.createEventSignup(event.id, teamId.value, athleteId.athlete_id, athleteId.athlete_type, event.type == 'Relay');
           console.log('Result:', insert);
         }
         catch (error) {

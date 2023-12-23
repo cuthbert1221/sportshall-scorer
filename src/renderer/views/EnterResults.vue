@@ -1,15 +1,22 @@
 <template>
   <div class="p-2">
     <h1>Enter Results for Event: {{ event.name }}</h1>
-    <DataTable :value="athletes" editMode="cell" @cell-edit-complete="onCellEditComplete" showGridlines >
+    <DataTable v-if="event.type != 'Relay' && event.type != 'Paarluf'" :value="athletes" editMode="cell" @cell-edit-complete="onCellEditComplete" showGridlines >
       <Column field="athlete_name" header="Name"></Column>
       <Column field="athlete_type" header="Type">
         <template #editor="{ data, field }">
             <InputText v-model="data[field]" />
         </template>
       </Column>
-      <Column v-for="n in maxAttempts" :field="'attempts.' + (n-1) + '.result'" :header="'Attempt ' + n" :key="n">        <template #editor="{ data, field }">
-            <InputText v-model="data.attempts[n-1].result" />
+      <Column v-for="n in maxAttempts" :field="'attempts.' + (n-1) + '.result'" :header="header(n)" :key="n">        <template #editor="{ data, field }">
+            <InputNumber v-model.number="data.attempts[n-1].result" :maxFractionDigits="event.maxFractionDigits"/>
+        </template>
+      </Column>
+    </DataTable>
+    <DataTable v-else :value="clubs" editMode="cell" @cell-edit-complete="onCellEditCompleteRelay" showGridlines >
+      <Column field="club_name" header="Name"></Column>
+      <Column field="time" header="Time">        <template #editor="{ data, field }">
+            <InputNumber v-model="data[field]" :maxFractionDigits="event.maxFractionDigits" />
         </template>
       </Column>
     </DataTable>
@@ -23,27 +30,35 @@ import { ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
 import { useRoute } from 'vue-router';
 import { useEventsStore } from '../stores/eventsStore';
 const eventsStore = useEventsStore();
 
 const route = useRoute();
 
-const event = ref({name: 'Event 1'}); // Populate with event data from EventDetails
+const event = ref({}); // Populate with event data from EventDetails
 const athletes = ref([]); // Populate with athlete data from EventSignUps
+const clubs = ref([]); // Populate with clubs data from EventSignUps
 const maxAttempts = ref(3); // Assuming 3 attempts per athlete
 const event_id = ref(route.params.eventid);
 const fetchEventDetails = async () => {
+  event.value = await window.electronAPI.getEvent(event_id.value);
+  maxAttempts.value = event.value.number_attempts;
+  if(event.value.type === 'Field' || event.value.type === 'Track') {
   const signups = await window.electronAPI.getEventSignup(event_id.value);
   for (let i = 0; i < signups.length; i++) {
     const signup = signups[i];
     let attempts = await window.electronAPI.getEventSignupAttempt(signup.athlete_id, event_id.value);
     // Create an array of maxAttempts.value length and increment attempt_number by 1 for each element
-    let attemptsArray = Array.from({ length: maxAttempts.value }, (_, i) => ({ result: '', attempt_number: i + 1 }));
+    let attemptsArray = Array.from({ length: maxAttempts.value }, (_, i) => ({ result: NaN, attempt_number: i + 1 }));
     if (attempts) {
       console.log('attempts exist');
       // Replace the entries in attemptsArray for which attempts exist
       for (let attempt of attempts) {
+        if (!isNaN(attempt.result)) {
+          attempt.result = Number(attempt.result);
+        }
         attemptsArray[attempt.attempt_number - 1] = attempt;
       }
     }
@@ -52,8 +67,24 @@ const fetchEventDetails = async () => {
   }
   console.log(signups);
   athletes.value = signups;
+} else {
+  clubs.value = (await window.electronAPI.getRelayClubs(event_id.value)).map(club => {
+    if (!isNaN(club.time)) {
+      club.time = Number(club.time);
+    }
+    return club;
+  });
+}
 };
-
+const header = (n: number) => {
+  if (event.value.type === 'Field'){
+    return 'Attempt ' + n;
+  } else if (event.value.type === 'Track' && n > 1){
+    return 'Heat ' + n;
+  } else {
+    return 'Time';
+  }
+};
 fetchEventDetails();
 
 const typeAAthletes = () => {
@@ -69,8 +100,8 @@ const submitResults = () => {
   // and submit them to the backend or local database
 };
 const rankTeamSheet = async () => {
-  await window.electronAPI.rankSignups(1);
-  await window.electronAPI.scoreEvent(1);
+  await window.electronAPI.rankSignups(event_id.value);
+  await window.electronAPI.scoreEvent(event_id.value);
 };
 
 const onCellEditComplete = async (event) => {
@@ -96,6 +127,19 @@ const onCellEditComplete = async (event) => {
         } 
       } else {
         if (newValue && newValue.length > 0) data[field] = newValue;
+      }
+      break;
+  }
+
+};
+const onCellEditCompleteRelay = async (event) => {
+  let { data, newValue, field } = event;
+  console.log(data);
+  switch (field) {
+    default:
+      if (newValue && newValue.length > 0) {
+        data[field] = newValue;
+        let attempts = await window.electronAPI.createEventRelaySignupAttempt(data.club_id, event_id.value, data.time);
       }
       break;
   }

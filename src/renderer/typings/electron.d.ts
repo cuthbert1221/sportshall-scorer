@@ -9,9 +9,12 @@ export default interface ElectronApi {
   createEventDetail: (event: EventDetails) => Promise<any>,
   createEventInstance: (event: EventInstances) => Promise<any>,
   readDataFromDb: (query: string) => Promise<any>,
+  createEventRelaySignupAttempt: (query: string) => Promise<any>,
   fetchData: (query: string) => Promise<any>,
   getEventSignupClub: (query: string) => Promise<any>,
   getEvents: (query: string) => Promise<any>,
+  getEventsDefaultOrder: (query: string) => Promise<any>,
+  getEvent: (query: string) => Promise<any>,
   rankTeamSheet: (query: string) => Promise<any>,
 }
 

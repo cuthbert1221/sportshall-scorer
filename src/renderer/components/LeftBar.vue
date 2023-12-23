@@ -122,6 +122,16 @@
                   <span class="font-medium">Venues</span>
                 </router-link>
               </li>
+              <li>
+                <router-link
+                  :to="{ name: 'ClubVenueResults' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Club Results</span>
+                </router-link>
+              </li>
             </ul>
           </li>
         </ul>
@@ -160,6 +170,16 @@
                 >
                   <i class="pi pi-plus mr-2"></i>
                   <span class="font-medium">View Athletes</span>
+                </router-link>
+              </li>
+              <li>
+                <router-link
+                  :to="{ name: 'AthleteVenueResults' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">Athlete Results</span>
                 </router-link>
               </li>
             </ul>

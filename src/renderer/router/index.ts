@@ -13,6 +13,8 @@ import PickEnterResults from '../views/PickEnterResults.vue';
 import PickTeamSheet from '../views/PickTeamSheet.vue';
 import Venues from '../views/Venues.vue';
 import ViewResults from '../views/ViewResults.vue';
+import AthleteVenueResults from '../views/AthleteVenueResults.vue';
+import ClubVenueResults from '../views/ClubVenueResults.vue';
 
 const routes = [
   {
@@ -84,6 +86,16 @@ const routes = [
     path: '/view-results',
     name: 'ViewResults',
     component: ViewResults
+  },
+  {
+    path: '/athlte-venue-results',
+    name: 'AthleteVenueResults',
+    component: AthleteVenueResults
+  },
+  {
+    path: '/club-venue-results',
+    name: 'ClubVenueResults',
+    component: ClubVenueResults
   },
   // Additional routes for other components
 ];

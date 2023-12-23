@@ -321,6 +321,7 @@ function createDatabase(): void {
       agegroup TEXT NOT NULL,
       gender TEXT NOT NULL,
       display_order INTEGER,
+      clubMaxAthletes INTEGER NOT NULL DEFAULT 2,
       FOREIGN KEY (eventDetail_name) REFERENCES EventDetails (name)
     );
   `;
@@ -400,7 +401,7 @@ function createDatabase(): void {
   });
 
   const createEventPoints = `
-  CREATE TABLE EventPoints (
+  CREATE TABLE IF NOT EXISTS EventPoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     venue TEXT NOT NULL,
     event_id INTEGER NOT NULL,
@@ -420,24 +421,129 @@ function createDatabase(): void {
     console.log("EventPoints table created or already exists.");
   });
 
-  const createRankingPoints = `
-  CREATE TABLE CategoryRankingPoints (
+  const createEventRelayAttemptsTableSql = `
+  CREATE TABLE IF NOT EXISTS EventRelayAttempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    venue TEXT NOT NULL,
-    category TEXT NOT NULL, -- e.g., U11B, U11G
-    club TEXT NOT NULL,
-    points INTEGER NOT NULL,
-    UNIQUE(venue, category, club)
+    club_id INTEGER NOT NULL,
+    event_id INTEGER NOT NULL,
+    result TEXT NOT NULL,
+    UNIQUE(event_id, club_id),
+    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
+    FOREIGN KEY (club_id) REFERENCES Clubs(id)
+  );
+`;
+
+// Execute the EventAttempts table creation query
+db.run(createEventRelayAttemptsTableSql, (err) => {
+  if (err) {
+    console.error(err.message);
+    return;
+  }
+  console.log("EventAttempts table created or already exists.");
+});
+
+const createEventRelayPositionsSql = `
+CREATE TABLE IF NOT EXISTS EventRelayPositions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    club_id INTEGER NOT NULL,
+    position INTEGER NOT NULL,
+    scoring_type String,
+    FOREIGN KEY (club_id) REFERENCES Clubs(id),
+    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
+    UNIQUE(club_id, event_id)
+);
+`;
+
+// Execute the EventAttempts table creation query
+db.run(createEventRelayPositionsSql, (err) => {
+  if (err) {
+    console.error(err.message);
+    return;
+  }
+  console.log("EventPositions table created or already exists.");
+});
+
+const createEventRelayPoints = `
+CREATE TABLE IF NOT EXISTS  EventRelayPoints (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  venue TEXT NOT NULL,
+  event_id INTEGER NOT NULL,
+  club_id INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  FOREIGN KEY (event_id) REFERENCES EventInstances(id),
+  FOREIGN KEY (club_id) REFERENCES Clubs(id),
+  UNIQUE(club_id, event_id)
 );`;
 
+// Execute the EventAttempts table creation query
+db.run(createEventRelayPoints, (err) => {
+  if (err) {
+    console.error(err.message);
+    return;
+  }
+  console.log("EventPoints table created or already exists.");
+});
+
+const createTotalPoints = `
+CREATE TABLE IF NOT EXISTS TotalPoints (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  venue TEXT NOT NULL,
+  club_id INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  agegroup TEXT NOT NULL, -- e.g., U11B, U11G, Mixed
+  gender TEXT NOT NULL, -- e.g., Boys, Girls, Mixed
+  FOREIGN KEY (club_id) REFERENCES Clubs(id),
+  UNIQUE(club_id, venue, agegroup, gender)
+);`;
+
+// Execute the createTotalPoints table creation query
+db.run(createTotalPoints, (err) => {
+  if (err) {
+    console.error(err.message);
+    return;
+  }
+  console.log("TotalPoints table created or already exists.");
+});
+
+const createTotalAthletePoints = `
+CREATE TABLE IF NOT EXISTS TotalAthletePoints (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  venue TEXT NOT NULL,
+  athlete_id INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
+  UNIQUE(athlete_id, venue)
+);`;
+
+//Execute the createTotalAthletePoints table creation query
+db.run(createTotalAthletePoints, (err) => {
+  if (err) {
+    console.error(err.message);
+    return;
+  }
+  console.log("TotalAthletePoints table created or already exists.");
+});
+
+//   const createCategoryRankingPosition = `
+//   CREATE TABLE IF NOT EXISTS CategoryRankingPosition (
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
+//     venue TEXT NOT NULL,
+//     agegroup TEXT NOT NULL, -- e.g., U11B, U11G, Mixed
+//     gender TEXT NOT NULL, -- e.g., Boys, Girls, Mixed
+//     club TEXT NOT NULL,
+//     points INTEGER NOT NULL,
+//     UNIQUE(venue, agegroup, gender, club)
+// );`;
+
   // Execute the EventAttempts table creation query
-  db.run(createRankingPoints, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("RankingPoints table created or already exists.");
-  });
+  // db.run(createCategoryRankingPosition, (err) => {
+  //   if (err) {
+  //     console.error(err.message);
+  //     return;
+  //   }
+  //   console.log("CategoryRankingPosition table created or already exists.");
+  // });
 
   // Close the database connection
   db.close((err) => {
@@ -593,6 +699,55 @@ ipcMain.handle('get-events', async (event, venue) => {
   });
 });
 
+ipcMain.handle('get-events-default-order', async (event, venue) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT EventInstances.*, EventDetails.*
+      FROM EventInstances 
+      INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
+      WHERE EventInstances.venue_name = ? 
+      ORDER BY 
+        CASE WHEN EventDetails.type IN ('Track', 'Paarlouf') THEN 1 WHEN EventDetails.type = 'Field' THEN 2 ELSE 3 END,
+        CASE WHEN EventInstances.agegroup = 'U11' THEN 1 WHEN EventInstances.agegroup = 'U13' THEN 2 WHEN EventInstances.agegroup = 'U15' THEN 3 ELSE 4 END,
+        CASE WHEN EventInstances.gender = 'Girls' THEN 1 WHEN EventInstances.gender = 'Boys' THEN 2 ELSE 3 END`,
+      [venue],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+
+ipcMain.handle('get-event', async (event, eventID) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT EventInstances.*, EventDetails.*
+      FROM EventInstances 
+      INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
+      WHERE EventInstances.id = ? 
+      ORDER BY EventInstances.display_order`,
+      [eventID],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows[0]);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+
 ipcMain.handle('delete-event-signups-club', async (event, clubId) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
@@ -623,7 +778,7 @@ interface CountRow {
   count: number;
 }
 
-ipcMain.handle('insert-event-signup', async (event, eventId, clubId, athleteId, athlete_type) => {
+ipcMain.handle('insert-event-signup', async (event, eventId, clubId, athleteId, athlete_type, relay = false) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.get(
@@ -641,7 +796,7 @@ ipcMain.handle('insert-event-signup', async (event, eventId, clubId, athleteId, 
             (err, row: CountRow | null) => {
               if (err) {
                 reject(err);
-              } else if (row && row.count >= 2) {
+              } else if (row && row.count >= 2 && !relay) {
                 reject(new Error('There are already 2 athletes from this club signed up for the event'));
               } else {
                 db.run(
@@ -670,6 +825,23 @@ ipcMain.handle('create-event-attempt', async (event, athlete_id, event_id, attem
   return new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO EventAttempts (athlete_id, event_id, attempt_number, result) VALUES (?, ?, ?, ?) ON CONFLICT(athlete_id, event_id, attempt_number) DO UPDATE SET result = excluded.result`, [athlete_id, event_id, attemptNumber, result],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.lastID);
+          }
+        }
+      );
+  }).finally(() => {
+    db.close();
+  });
+});
+ipcMain.handle('create-event-relay-attempt', async (event, club_id, event_id, result) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO EventRelayAttempts (club_id, event_id, result) VALUES (?, ?, ?) ON CONFLICT(club_id, event_id) DO UPDATE SET result = excluded.result`, [club_id, event_id, result],
         function (err) {
           if (err) {
             reject(err);
@@ -785,31 +957,55 @@ ipcMain.handle('rankSignups', async (ipcEvent, eventId: number) => {
 async function rankSignups(eventId: number): Promise<any> {
   // Delete all records in the EventPositions table with a specific eventId
   await deleteEventPosition(eventId);
+  await deleteEventRelayPosition(eventId);
   const event_details = await getEventDetails(eventId);
-  console.log("event_details: " + event_details);
+  console.log(event_details);
   const scoring_method = event_details.scoringMethod;
   // Define a helper function to handle the ranking process
-  const handleRanking = async (signups: any[], scoring_athlete: string) => {
+  const handleRanking = async (signups: any[], scoring_athlete: string, eventId: number) => {
+      // Filter to get top 2 athletes from each club
+      /*const filteredAthletes = await filterTopTwoAthletesPerClub(signups, eventId);
+      // Convert filtered athletes to the format expected by rankEventAttempts
+      const signupScores = filteredAthletes.map(athlete => ({
+        signupId: athlete.signupId, 
+        scores: [athlete.bestAttempt] 
+      }));
+    */
     // For each signup, fetch all attempts and find the best attempt
+    
     const signupScores = await Promise.all(signups.map(async (signup: any) => {
       const attempts = await getEventSignupAttempt(signup.athlete_id, eventId);
       attempts.sort((a: any, b: any) => a.result - b.result);
-      /*if (signup.scoringMethod === 'highest') {
+      /* if (signup.scoringMethod === 'highest') {
         attempts.reverse();
       }
       */
       return { signupId: signup.id, scores: attempts.map((a: any) => a.result) };
     }));
-
+    
     const rankedAthletes = rankEventAttempts(signupScores, scoring_method === "highest"); // Assuming higher scores are better
     console.log(rankedAthletes);
+
+    const clubAthleteCount = {};
     for (const athlete of rankedAthletes) {
+      let modifier = 0;
       console.log(athlete);
       const { athlete_id } = await getEventSignupUserID(athlete.signupId);
+      const { athlete_club } = await getEventSignupUserClub(athlete.signupId);
       console.log("athlete_id: " + athlete_id);
       console.log(athlete.scores.length)
-      if(await checkUserResultsExist(eventId, athlete_id)){
-        await createEventPosition({ eventId, athlete_id, position: athlete.position, scoring_type: scoring_athlete });
+
+      if (!clubAthleteCount[athlete_club]) {
+        clubAthleteCount[athlete_club] = 1;
+      }
+      else {
+        clubAthleteCount[athlete_club] += 1;
+      }
+
+      if(await checkUserResultsExist(eventId, athlete_id) && clubAthleteCount[athlete_club] < 3){
+        await createEventPosition({ eventId, athlete_id, position: athlete.position + modifier, scoring_type: scoring_athlete });
+      } else {
+        modifier += 1;
       }
     }
   };
@@ -817,13 +1013,25 @@ async function rankSignups(eventId: number): Promise<any> {
   // Fetch all signups for the event and handle the ranking process
   console.log("scoring_type: " + event_details.type);
   if (event_details.type == "Track") {
+    console.log("scoring_type: " + event_details.type);
     const signupsA = await getEventSignupTrack(eventId, "A");
-    await handleRanking(signupsA, "A");
+    await handleRanking(signupsA, "A", eventId);
     const signupsB = await getEventSignupTrack(eventId, "B");
-    await handleRanking(signupsB, "B");
-  } else {
+    await handleRanking(signupsB, "B", eventId);
+  } else if (event_details.type == "Relay" || event_details.type == "Paarluf") {
+    console.log("scoring_type: " + event_details.type);
+    const signups = await getRelaySignupsResults(eventId, 4);
+    let i =1;
+    for (const club of signups) {
+      await createEventRelayPosition({ eventId, club_id: club.club_id, position: i, scoring_type: event_details.type });
+      i += 1;
+    }
+
+  }
+  else {
+    console.log("scoring_type: " + event_details.type);
     const signups = await getEventSignup(eventId);
-    await handleRanking(signups, "N/A");
+    await handleRanking(signups, "N/A", eventId);
   }
 }
 
@@ -900,7 +1108,74 @@ async function getEventSignup(eventId): Promise<any> {
   });
 }
 
+async function getRelaySignups(eventId, number): Promise<any> {
+  console.log("eventId: " + eventId);
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(`
+      SELECT EventSignUps.club_id, Clubs.name AS club_name, EventRelayAttempts.result as time
+      FROM EventSignUps
+      INNER JOIN Clubs ON EventSignUps.club_id = Clubs.id
+      LEFT JOIN EventRelayAttempts ON EventSignUps.club_id = EventRelayAttempts.club_id AND EventSignUps.event_id = EventRelayAttempts.event_id
+      WHERE EventSignUps.event_id = ?
+      GROUP BY EventSignUps.club_id
+      HAVING COUNT(DISTINCT EventSignUps.athlete_id) = ?;
+    `, [eventId, number],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getRelaySignupsResults(eventId, number): Promise<any> {
+  console.log("eventId: " + eventId);
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(`
+      SELECT EventSignUps.club_id, Clubs.name AS club_name, EventRelayAttempts.result as time
+      FROM EventSignUps
+      INNER JOIN Clubs ON EventSignUps.club_id = Clubs.id
+      INNER JOIN EventRelayAttempts ON EventSignUps.club_id = EventRelayAttempts.club_id AND EventSignUps.event_id = EventRelayAttempts.event_id
+      WHERE EventSignUps.event_id = ?
+      GROUP BY EventSignUps.club_id
+      HAVING COUNT(DISTINCT EventSignUps.athlete_id) = ?
+      ORDER BY EventRelayAttempts.result ASC;
+    `, [eventId, number],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+
 async function checkUserResultsExist(evnetID, user_id): Promise<boolean> {
+  const db = await openDatabase();
+  return new Promise<boolean>((resolve, reject) => {
+    db.get(`SELECT id FROM EventAttempts WHERE event_id = ? AND athlete_id = ?`, [evnetID, user_id], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row ? true : false);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+async function checkNumberOfAthletesPerClub(evnetID, user_id): Promise<boolean> {
   const db = await openDatabase();
   return new Promise<boolean>((resolve, reject) => {
     db.get(`SELECT id FROM EventAttempts WHERE event_id = ? AND athlete_id = ?`, [evnetID, user_id], (err, row) => {
@@ -938,6 +1213,23 @@ async function getEventSignupUserID(signupId): Promise<any> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(`SELECT athlete_id FROM EventSignups WHERE id = ? LIMIT 1`, [signupId],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows[0]);  // Resolve the first row
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getEventSignupUserClub(signupId): Promise<any> {
+  console.log("signupId: " + signupId);
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT club_id FROM EventSignups WHERE id = ? LIMIT 1`, [signupId],
       (err, rows) => {
         if (err) {
           reject(err);
@@ -1022,6 +1314,21 @@ async function createEventPosition({ eventId, athlete_id, position, scoring_type
     db.close();
   });
 }
+
+async function createEventRelayPosition({ eventId, club_id, position, scoring_type }): Promise<void> {
+  const db = await openDatabase();
+  return new Promise<void>((resolve, reject) => {
+    db.run('INSERT INTO EventRelayPositions (event_id, club_id, position, scoring_type) VALUES (?, ?, ?, ?)', [eventId, club_id, position, scoring_type], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
 // Delete all records in the EventPositions table with a specific eventId
 async function deleteEventPosition(eventId: number): Promise<void> {
   const db = await openDatabase();
@@ -1037,13 +1344,60 @@ async function deleteEventPosition(eventId: number): Promise<void> {
     db.close();
   });
 }
+async function deleteEventRelayPosition(eventId: number): Promise<void> {
+  const db = await openDatabase();
+  return new Promise<void>((resolve, reject) => {
+    db.run('DELETE FROM EventRelayPositions WHERE event_id = ?', [eventId], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
 // Call the function to create the database
 createDatabase();
 
 
 
-
+/*
 /// Scot
+interface AthleteAttempt {
+  signupId: number;
+  bestAttempt: number;
+  club: string;
+}
+
+// ... other code ...
+async function filterTopTwoAthletesPerClub(signups: any[], eventId: number): Promise<AthleteAttempt[]> {
+  let athletesByClub: Record<string, AthleteAttempt[]> = {};
+
+  for (const signup of signups) {
+    const club = signup.club;
+    const attempts = await getEventSignupAttempt(signup.athlete_id, eventId);
+    const bestAttempt = Math.max(...attempts.map(a => a.result));
+
+    if (!athletesByClub[club]) {
+      athletesByClub[club] = [];
+    }
+
+    athletesByClub[club].push({ signupId: signup.id, bestAttempt: bestAttempt, club: club });
+
+    // Sort and keep only top 2 athletes per club
+    athletesByClub[club].sort((a, b) => b.bestAttempt - a.bestAttempt);
+    if (athletesByClub[club].length > 2) {
+      athletesByClub[club].length = 2; // Keep only top 2
+    }
+  }
+
+  // Flatten the array to get top 2 athletes from all clubs
+  return ([] as AthleteAttempt[]).concat(...Object.values(athletesByClub));
+}
+*/
+
 
 function rankEventAttempts(eventAttempts, isHigherBetter = true) {
   // Filter out athletes with no scores
@@ -1113,6 +1467,25 @@ async function createOrUpdateEventPoint({ eventId, athlete_id, points, venue }):
     db.close();
   });
 }
+async function createOrUpdateEventRelayPoint({ eventId, club_id, points, venue }): Promise<void> {
+  const db = await openDatabase();
+  return new Promise<void>((resolve, reject) => {
+    db.run(`
+      INSERT INTO EventRelayPoints (event_id, club_id, points, venue) 
+      VALUES (?, ?, ?, ?) 
+      ON CONFLICT(club_id, event_id) 
+      DO UPDATE SET points = ?, venue = ?
+    `, [eventId, club_id, points, venue, points, venue], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
 
 interface RowCount {
   count: number;
@@ -1146,19 +1519,49 @@ async function getEventPositionsForEvents(eventId: number): Promise<any[]> {
     db.close();
   });
 }
+async function getEventPositionsForEventsRelay(eventId: number): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all('SELECT * FROM EventRelayPositions WHERE event_id = ? ORDER BY position ASC', [eventId], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
 // Assign scores to each position and write them to the EventPoints table
 async function eventPoints(eventId: number): Promise<void> {
   // Retrieve all the eventPositions from the database
   const eventPositions = await getEventPositionsForEvents(eventId);
   const event_details = await getEventDetails(eventId);
+  console.log("event_details: " + event_details);
   const numClubs = await getClubCount();
   const venue = event_details.venue;
   let score = numClubs * 2;
   if (event_details.type == "Track") {
     assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue);
   } 
+  if (event_details.type == "Relay" || event_details.type == "Paarluf") {
+    console.log("scoring_type skipping: " + event_details.type);
+  } 
   else {
     assignScoresAndWriteToEventPointsField(eventPositions, score, venue);
+  }
+}
+async function eventPointsRelay(eventId: number): Promise<void> {
+  // Retrieve all the eventPositions from the database
+  const eventPositions = await getEventPositionsForEventsRelay(eventId);
+  const event_details = await getEventDetails(eventId);
+  console.log("event_details: " + event_details);
+  const numClubs = await getClubCount();
+  const venue = event_details.venue;
+  let score = numClubs * 2;
+  if (event_details.type == "Relay" || event_details.type == "Paarluf") {
+  assignScoresAndWriteToEventPointsRelay(eventPositions, score, venue);
   }
 }
 
@@ -1183,9 +1586,60 @@ async function assignScoresAndWriteToEventPointsField(eventPositions, score, ven
     createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue: venue });
   }
 }
+async function assignScoresAndWriteToEventPointsRelay(eventPositions, score, venue) {
+  for (let position of eventPositions) {
+    position.score = score;
+    score -= 2
+    // Write the score to EventPoints
+    createOrUpdateEventRelayPoint({ eventId: position.event_id, club_id: position.club_id, points: position.score, venue: venue });
+  }
+}
 
 ipcMain.handle('scoreEvent', async (ipcEvent, eventId: number) => {
   await eventPoints(eventId);
+  await eventPointsRelay(eventId);
   ipcEvent.sender.send('eventScored');
 
 });
+
+
+ipcMain.handle('get-relay-signup', async (ipcEvent, eventId: number) => {
+  const event_details = await getEventDetails(eventId);
+  let clubs = [];
+  if (event_details.type == "Paarluf") {
+      clubs = await getRelaySignups(eventId, 2);
+  } else {
+      clubs = await getRelaySignups(eventId, 4);
+  }
+
+  return clubs;
+});
+
+
+ipcMain.handle('get-athlete-total-score-venue', async (event, athleteId, venue) => {
+  return await athleteTotalVenueScore(athleteId, venue);
+});
+
+interface ScoreRow {
+  total_score: number;
+}
+async function athleteTotalVenueScore(athleteId, venue) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT SUM(points) as total_score 
+       FROM EventPoints 
+       WHERE athlete_id = ? AND venue = ?`,
+      [athleteId, venue],
+      (err, row: ScoreRow | undefined) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row ? row.total_score : 0);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
