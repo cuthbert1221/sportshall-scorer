@@ -3,7 +3,7 @@ import {join} from 'path';
 import { Athlete, EventDetails, EventSignup } from './interfaces.js';
 export interface EventInstances  {
   eventDetail_name: string;
-  venue_name : string;
+  venue_id : number;
   agegroup: string;
   gender: string;
 }
@@ -100,9 +100,13 @@ async function insertEventDetail(db: sqlite3.Database, event: EventDetails): Pro
 
 import sqlite3 from 'sqlite3';
 
-ipcMain.handle('create-event-instance', async (event, form: EventInstances) => {
+ipcMain.handle('create-event-instance', async (event, form: any) => {
   // Handle event instance creation in SQLite database
-  const result = await addEventInstance({ eventDetail_name: form.eventDetail_name, venue_name: form.venue_name, agegroup: form.agegroup, gender: form.gender });
+
+  //lookup venue id
+  const venue_id = await getVenueID(form.venue_name);
+  console.log(venue_id);
+  const result = await addEventInstance({ eventDetail_name: form.eventDetail_name, venue_id: venue_id, agegroup: form.agegroup, gender: form.gender });
   console.log("The result was: " + result);
   return result
 });
@@ -120,9 +124,9 @@ async function addEventInstance(eventInstance: EventInstances): Promise<number |
 }
 
 async function insertEventInstance(db: sqlite3.Database, eventInstance: EventInstances): Promise<number> {
-  const sql = `INSERT INTO EventInstances (eventDetail_name, venue_name, agegroup, gender) VALUES (?, ?, ?, ?)`;
+  const sql = `INSERT INTO EventInstances (eventDetail_name, venue_id, agegroup, gender) VALUES (?, ?, ?, ?)`;
   return new Promise((resolve, reject) => {
-    db.run(sql, [eventInstance.eventDetail_name, eventInstance.venue_name, eventInstance.agegroup, eventInstance.gender], function(err) {
+    db.run(sql, [eventInstance.eventDetail_name, eventInstance.venue_id, eventInstance.agegroup, eventInstance.gender], function(err) {
       if (err) {
         console.error(err.message);
         reject(err.message);
@@ -317,12 +321,13 @@ function createDatabase(): void {
     CREATE TABLE IF NOT EXISTS EventInstances (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       eventDetail_name TEXT NOT NULL,
-      venue_name TEXT NOT NULL,
+      venue_id INTEGER NOT NULL,
       agegroup TEXT NOT NULL,
       gender TEXT NOT NULL,
       display_order INTEGER,
       clubMaxAthletes INTEGER NOT NULL DEFAULT 2,
       FOREIGN KEY (eventDetail_name) REFERENCES EventDetails (name)
+      FOREIGN KEY (venue_id) REFERENCES Venues(id)
     );
   `;
 
@@ -403,12 +408,13 @@ function createDatabase(): void {
   const createEventPoints = `
   CREATE TABLE IF NOT EXISTS EventPoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    venue TEXT NOT NULL,
+    venue_id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
     athlete_id INTEGER NOT NULL,
     points INTEGER NOT NULL,
     FOREIGN KEY (event_id) REFERENCES EventInstances(id),
     FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
+    FOREIGN KEY (venue_id) REFERENCES Venues(id),
     UNIQUE(athlete_id, event_id)
 );`;
 
@@ -467,12 +473,13 @@ db.run(createEventRelayPositionsSql, (err) => {
 const createEventRelayPoints = `
 CREATE TABLE IF NOT EXISTS  EventRelayPoints (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  venue TEXT NOT NULL,
+  venue_id INTEGER NOT NULL,
   event_id INTEGER NOT NULL,
   club_id INTEGER NOT NULL,
   points INTEGER NOT NULL,
   FOREIGN KEY (event_id) REFERENCES EventInstances(id),
   FOREIGN KEY (club_id) REFERENCES Clubs(id),
+  FOREIGN KEY (venue_id) REFERENCES Venues(id),
   UNIQUE(club_id, event_id)
 );`;
 
@@ -488,13 +495,14 @@ db.run(createEventRelayPoints, (err) => {
 const createTotalPoints = `
 CREATE TABLE IF NOT EXISTS TotalPoints (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  venue TEXT NOT NULL,
+  venue_id INTEGER NOT NULL,
   club_id INTEGER NOT NULL,
   points INTEGER NOT NULL,
   agegroup TEXT NOT NULL, -- e.g., U11B, U11G, Mixed
   gender TEXT NOT NULL, -- e.g., Boys, Girls, Mixed
   FOREIGN KEY (club_id) REFERENCES Clubs(id),
-  UNIQUE(club_id, venue, agegroup, gender)
+  FOREIGN KEY (venue_id) REFERENCES Venues(id),
+  UNIQUE(club_id, venue_id, agegroup, gender)
 );`;
 
 // Execute the createTotalPoints table creation query
@@ -509,11 +517,12 @@ db.run(createTotalPoints, (err) => {
 const createTotalAthletePoints = `
 CREATE TABLE IF NOT EXISTS TotalAthletePoints (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  venue TEXT NOT NULL,
+  venue_id INTEGER NOT NULL,
   athlete_id INTEGER NOT NULL,
   points INTEGER NOT NULL,
   FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
-  UNIQUE(athlete_id, venue)
+  FOREIGN KEY (venue_id) REFERENCES Venues(id),
+  UNIQUE(athlete_id, venue_id)
 );`;
 
 //Execute the createTotalAthletePoints table creation query
@@ -677,15 +686,16 @@ ipcMain.handle('get-event-signups', async (event, eventId) => {
 });
 
 ipcMain.handle('get-events', async (event, venue) => {
+  const venue_id = await getVenueID(venue);
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(
       `SELECT EventInstances.*, EventDetails.*
       FROM EventInstances 
       INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
-      WHERE EventInstances.venue_name = ? 
+      WHERE EventInstances.venue_id = ? 
       ORDER BY EventInstances.display_order`,
-      [venue],
+      [venue_id],
       (err, rows) => {
         if (err) {
           reject(err);
@@ -700,18 +710,19 @@ ipcMain.handle('get-events', async (event, venue) => {
 });
 
 ipcMain.handle('get-events-default-order', async (event, venue) => {
+  const venue_id = await getVenueID(venue);
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(
       `SELECT EventInstances.*, EventDetails.*
       FROM EventInstances 
       INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
-      WHERE EventInstances.venue_name = ? 
+      WHERE EventInstances.venue_id = ? 
       ORDER BY 
         CASE WHEN EventDetails.type IN ('Track', 'Paarlouf') THEN 1 WHEN EventDetails.type = 'Field' THEN 2 ELSE 3 END,
         CASE WHEN EventInstances.agegroup = 'U11' THEN 1 WHEN EventInstances.agegroup = 'U13' THEN 2 WHEN EventInstances.agegroup = 'U15' THEN 3 ELSE 4 END,
         CASE WHEN EventInstances.gender = 'Girls' THEN 1 WHEN EventInstances.gender = 'Boys' THEN 2 ELSE 3 END`,
-      [venue],
+      [venue_id],
       (err, rows) => {
         if (err) {
           reject(err);
@@ -1225,6 +1236,23 @@ async function getEventSignupUserID(signupId): Promise<any> {
     db.close();
   });
 }
+
+async function getVenueID(name): Promise<any> {
+  const db = await openDatabase();
+  return new Promise<number>((resolve, reject) => {
+    db.all(`SELECT id FROM Venues WHERE name = ? LIMIT 1`, [name],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve((rows[0] as { id: number }).id);  // Resolve the first row
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
 async function getEventSignupUserClub(signupId): Promise<any> {
   console.log("signupId: " + signupId);
   const db = await openDatabase();
@@ -1246,7 +1274,7 @@ async function getEventSignupUserClub(signupId): Promise<any> {
 async function getEventDetails(eventInstanceId): Promise<any> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    db.get(`SELECT EventDetails.type, EventDetails.scoringMethod, EventInstances.venue_name as venue FROM EventDetails 
+    db.get(`SELECT EventDetails.type, EventDetails.scoringMethod, EventInstances.venue_id as venue_id FROM EventDetails 
             INNER JOIN EventInstances ON EventDetails.name = EventInstances.eventDetail_name 
             WHERE EventInstances.id = ?`, [eventInstanceId],
       (err, row) => {
@@ -1448,15 +1476,15 @@ function compareAthletes(aScores, bScores, isHigherBetter) {
 }
 
 // Create a new record in the EventPoints table
-async function createOrUpdateEventPoint({ eventId, athlete_id, points, venue }): Promise<void> {
+async function createOrUpdateEventPoint({ eventId, athlete_id, points, venue_id }): Promise<void> {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
     db.run(`
-      INSERT INTO EventPoints (event_id, athlete_id, points, venue) 
+      INSERT INTO EventPoints (event_id, athlete_id, points, venue_id) 
       VALUES (?, ?, ?, ?) 
       ON CONFLICT(athlete_id, event_id) 
-      DO UPDATE SET points = ?, venue = ?
-    `, [eventId, athlete_id, points, venue, points, venue], (err) => {
+      DO UPDATE SET points = ?, venue_id = ?
+    `, [eventId, athlete_id, points, venue_id, points, venue_id], (err) => {
       if (err) {
         reject(err);
       } else {
@@ -1467,15 +1495,15 @@ async function createOrUpdateEventPoint({ eventId, athlete_id, points, venue }):
     db.close();
   });
 }
-async function createOrUpdateEventRelayPoint({ eventId, club_id, points, venue }): Promise<void> {
+async function createOrUpdateEventRelayPoint({ eventId, club_id, points, venue_id }): Promise<void> {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
     db.run(`
-      INSERT INTO EventRelayPoints (event_id, club_id, points, venue) 
+      INSERT INTO EventRelayPoints (event_id, club_id, points, venue_id) 
       VALUES (?, ?, ?, ?) 
       ON CONFLICT(club_id, event_id) 
-      DO UPDATE SET points = ?, venue = ?
-    `, [eventId, club_id, points, venue, points, venue], (err) => {
+      DO UPDATE SET points = ?, venue_id = ?
+    `, [eventId, club_id, points, venue_id, points, venue_id], (err) => {
       if (err) {
         reject(err);
       } else {
@@ -1540,16 +1568,16 @@ async function eventPoints(eventId: number): Promise<void> {
   const event_details = await getEventDetails(eventId);
   console.log("event_details: " + event_details);
   const numClubs = await getClubCount();
-  const venue = event_details.venue;
+  const venue_id = event_details.venue_id;
   let score = numClubs * 2;
   if (event_details.type == "Track") {
-    assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue);
+    assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue_id);
   } 
   if (event_details.type == "Relay" || event_details.type == "Paarluf") {
     console.log("scoring_type skipping: " + event_details.type);
   } 
   else {
-    assignScoresAndWriteToEventPointsField(eventPositions, score, venue);
+    assignScoresAndWriteToEventPointsField(eventPositions, score, venue_id);
   }
 }
 async function eventPointsRelay(eventId: number): Promise<void> {
@@ -1558,14 +1586,14 @@ async function eventPointsRelay(eventId: number): Promise<void> {
   const event_details = await getEventDetails(eventId);
   console.log("event_details: " + event_details);
   const numClubs = await getClubCount();
-  const venue = event_details.venue;
+  const venue_id = event_details.venue_id;
   let score = numClubs * 2;
   if (event_details.type == "Relay" || event_details.type == "Paarluf") {
-  assignScoresAndWriteToEventPointsRelay(eventPositions, score, venue);
+  assignScoresAndWriteToEventPointsRelay(eventPositions, score, venue_id);
   }
 }
 
-async function assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue) {
+async function assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue_id) {
   for (let position of eventPositions) {
     // Assign score based on whether the athlete is A or B
     if (position.scoring_type == "A") {
@@ -1575,23 +1603,23 @@ async function assignScoresAndWriteToEventPointsTrack(eventPositions, score, ven
     }
 
     // Write the score to EventPoints
-    createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue: venue});
+    createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue_id: venue_id});
   }
 }
-async function assignScoresAndWriteToEventPointsField(eventPositions, score, venue) {
+async function assignScoresAndWriteToEventPointsField(eventPositions, score, venue_id) {
   for (let position of eventPositions) {
     position.score = score;
     score -= 1
     // Write the score to EventPoints
-    createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue: venue });
+    createOrUpdateEventPoint({ eventId: position.event_id, athlete_id: position.athlete_id, points: position.score, venue_id: venue_id });
   }
 }
-async function assignScoresAndWriteToEventPointsRelay(eventPositions, score, venue) {
+async function assignScoresAndWriteToEventPointsRelay(eventPositions, score, venue_id) {
   for (let position of eventPositions) {
     position.score = score;
     score -= 2
     // Write the score to EventPoints
-    createOrUpdateEventRelayPoint({ eventId: position.event_id, club_id: position.club_id, points: position.score, venue: venue });
+    createOrUpdateEventRelayPoint({ eventId: position.event_id, club_id: position.club_id, points: position.score, venue_id: venue_id });
   }
 }
 
@@ -1616,21 +1644,21 @@ ipcMain.handle('get-relay-signup', async (ipcEvent, eventId: number) => {
 });
 
 
-ipcMain.handle('get-athlete-total-score-venue', async (event, athleteId, venue) => {
-  return await athleteTotalVenueScore(athleteId, venue);
+ipcMain.handle('get-athlete-total-score-venue', async (event, athleteId, venue_id) => {
+  return await athleteTotalVenueScore(athleteId, venue_id);
 });
 
 interface ScoreRow {
   total_score: number;
 }
-async function athleteTotalVenueScore(athleteId, venue) {
+async function athleteTotalVenueScore(athleteId, venue_id) {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.get(
       `SELECT SUM(points) as total_score 
        FROM EventPoints 
-       WHERE athlete_id = ? AND venue = ?`,
-      [athleteId, venue],
+       WHERE athlete_id = ? AND venue_id = ?`,
+      [athleteId, venue_id],
       (err, row: ScoreRow | undefined) => {
         if (err) {
           reject(err);
@@ -1644,14 +1672,14 @@ async function athleteTotalVenueScore(athleteId, venue) {
   });
 }
 
-async function clubsTotalVenue(venue) {
+async function clubsTotalVenue(venue_id) {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.get(
       `SELECT SUM(points) as total_score 
        FROM EventPoints 
-       WHERE athlete_id = ? AND venue = ?`,
-      [venue],
+       WHERE athlete_id = ? AND venue_id = ?`,
+      [venue_id],
       (err, row: ScoreRow | undefined) => {
         if (err) {
           reject(err);
@@ -1664,17 +1692,17 @@ async function clubsTotalVenue(venue) {
     db.close();
   });
 }
-async function getClubsTotalVenue(venue) {
+async function getClubsTotalVenue(venue_id) {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(
       `SELECT Athletes.club, SUM(EventPoints.points) as total_points
        FROM EventPoints
        JOIN Athletes ON EventPoints.athlete_id = Athletes.id
-       WHERE EventPoints.venue = ?
+       WHERE EventPoints.venue_id = ?
        GROUP BY Athletes.club
        ORDER BY total_points DESC`,
-      [venue],
+      [venue_id],
       (err, rows) => {
         if (err) {
           reject(err);
