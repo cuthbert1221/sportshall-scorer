@@ -3,6 +3,7 @@
     <h1>Enter Results for Event: {{ event.name }}</h1>
     <DataTable v-if="event.type != 'Relay' && event.type != 'Paarluf'" :value="athletes" editMode="cell" @cell-edit-complete="onCellEditComplete" showGridlines >
       <Column field="athlete_name" header="Name"></Column>
+      <Column field="club_name" header="Club"></Column>
       <Column field="athlete_type" header="Type">
         <template #editor="{ data, field }">
             <InputText v-model="data[field]" />

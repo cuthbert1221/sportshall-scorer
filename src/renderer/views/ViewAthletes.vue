@@ -12,6 +12,14 @@
         </template>
         <template #empty> No athletes found. </template>
         <template #loading> Loading athletes data. Please wait. </template>
+        <Column field="id" header="ID" style="min-width: 12rem">
+          <template #body="{ data }">
+            {{ data.id }}
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by ID" />
+          </template>
+        </Column>
         <Column field="fullname" header="Fullname" style="min-width: 12rem">
           <template #body="{ data }">
             {{ data.fullname }}
@@ -48,9 +56,9 @@
                 </Dropdown>         
                </template>
         </Column>
-        <Column field="club" header="Club" style="min-width: 12rem">
+        <Column field="club_name" header="Club" style="min-width: 12rem">
           <template #body="{ data }">
-            {{ data.club }}
+            {{ data.club_name }}
           </template>
           <template #filter="{ filterModel, filterCallback }">
             <Dropdown id="club"  v-model="filterModel.value" :options="clubs" :showClear="true" placeholder="Select a Club" aria-describedby="dd-error" @change="filterCallback()">
@@ -80,8 +88,9 @@ const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   fullname: { value: null, matchMode: FilterMatchMode.CONTAINS },
   agegroup: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  id: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   gender: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-  club: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
+  club_name: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
 });
 const loading = ref(true);
 const clubs = ref<string[]>([]);
@@ -97,8 +106,7 @@ for (var ageGroup of ageGroupsObjects) {
 }
 const loadData = async () => {
   try {
-    const query = "SELECT * FROM athletes";
-    const result = await window.electronAPI.readDataFromDb(query);
+    const result = await window.electronAPI.fetchData('athletes');
     athletes.value = result;
     const club_list = await window.electronAPI.fetchData('clubs');
     for (var club of club_list) {

@@ -1,0 +1,113 @@
+Club,Age,Gender,Label,Event,Race,Name,Performance
+Oswestry,U11,Girls,Field Event 1,STANDING LONG JUMP,A,Ava Walton,1.62
+Shrewsbury,U11,Girls,Field Event 1,STANDING LONG JUMP,A,Grace Turney,1.88
+Telford,U11,Girls,Field Event 1,STANDING LONG JUMP,A," "," "
+Wenlock,U11,Girls,Field Event 1,STANDING LONG JUMP,A," "," "
+Oswestry,U11,Girls,Field Event 1,STANDING LONG JUMP,B," "," "
+Shrewsbury,U11,Girls,Field Event 1,STANDING LONG JUMP,B,Selina Vuli,1.82
+Telford,U11,Girls,Field Event 1,STANDING LONG JUMP,B," "," "
+Wenlock,U11,Girls,Field Event 1,STANDING LONG JUMP,B," "," "
+Oswestry,U11,Girls,Field Event 1,STANDING LONG JUMP,C," "," "
+Shrewsbury,U11,Girls,Field Event 1,STANDING LONG JUMP,C,Georgie Howson,1.63
+Telford,U11,Girls,Field Event 1,STANDING LONG JUMP,C," "," "
+Wenlock,U11,Girls,Field Event 1,STANDING LONG JUMP,C," "," "
+Oswestry,U11,Girls,Field Event 2,SPEED BOUNCE,A,Edith John,5
+Shrewsbury,U11,Girls,Field Event 2,SPEED BOUNCE,A,Evelyn Hulme,7
+Telford,U11,Girls,Field Event 2,SPEED BOUNCE,A,Bella Beddall,8
+Wenlock,U11,Girls,Field Event 2,SPEED BOUNCE,A," "," "
+Oswestry,U11,Girls,Field Event 2,SPEED BOUNCE,B," "," "
+Shrewsbury,U11,Girls,Field Event 2,SPEED BOUNCE,B,Lucy Dahn,4
+Telford,U11,Girls,Field Event 2,SPEED BOUNCE,B,Isla Withers,6
+Wenlock,U11,Girls,Field Event 2,SPEED BOUNCE,B," "," "
+Oswestry,U11,Girls,Field Event 2,SPEED BOUNCE,C," "," "
+Shrewsbury,U11,Girls,Field Event 2,SPEED BOUNCE,C,Arya Cassini-Jones,2
+Telford,U11,Girls,Field Event 2,SPEED BOUNCE,C," "," "
+Wenlock,U11,Girls,Field Event 2,SPEED BOUNCE,C," "," "
+Oswestry,U11,Boys,Field Event 1,SPEED BOUNCE,A,Max Jones,8
+Shrewsbury,U11,Boys,Field Event 1,SPEED BOUNCE,A," "," "
+Telford,U11,Boys,Field Event 1,SPEED BOUNCE,A,Axel Gordon,4
+Wenlock,U11,Boys,Field Event 1,SPEED BOUNCE,A,Isaac Holme,7
+Oswestry,U11,Boys,Field Event 1,SPEED BOUNCE,B,Seth Baillie,6
+Shrewsbury,U11,Boys,Field Event 1,SPEED BOUNCE,B,Riley Griffiths,6
+Telford,U11,Boys,Field Event 1,SPEED BOUNCE,B," "," "
+Wenlock,U11,Boys,Field Event 1,SPEED BOUNCE,B,Ben Beard,3
+Oswestry,U11,Boys,Field Event 1,SPEED BOUNCE,C,Oliver Jones,2
+Shrewsbury,U11,Boys,Field Event 1,SPEED BOUNCE,C," "," "
+Telford,U11,Boys,Field Event 1,SPEED BOUNCE,C," "," "
+Wenlock,U11,Boys,Field Event 1,SPEED BOUNCE,C," "," "
+Oswestry,U11,Boys,Field Event 2,STANDING LONG JUMP,A,Macsen Egerton,1.36
+Shrewsbury,U11,Boys,Field Event 2,STANDING LONG JUMP,A,Logan Watkin,1.66
+Telford,U11,Boys,Field Event 2,STANDING LONG JUMP,A," "," "
+Wenlock,U11,Boys,Field Event 2,STANDING LONG JUMP,A,George Willett,1.62
+Oswestry,U11,Boys,Field Event 2,STANDING LONG JUMP,B,Joseph Barlow,1.76
+Shrewsbury,U11,Boys,Field Event 2,STANDING LONG JUMP,B,Alexander Richardson,1.38
+Telford,U11,Boys,Field Event 2,STANDING LONG JUMP,B," "," "
+Wenlock,U11,Boys,Field Event 2,STANDING LONG JUMP,B,Fionn Munslow,1.32
+Oswestry,U11,Boys,Field Event 2,STANDING LONG JUMP,C,William Arran,1.84
+Shrewsbury,U11,Boys,Field Event 2,STANDING LONG JUMP,C," "," "
+Telford,U11,Boys,Field Event 2,STANDING LONG JUMP,C," "," "
+Wenlock,U11,Boys,Field Event 2,STANDING LONG JUMP,C," "," "
+Oswestry,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,A,Evie Griffiths,5.46
+Shrewsbury,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,A," "," "
+Telford,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,A,Dionne White,5.32
+Wenlock,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,A,Hallie Bunn,5.22
+Oswestry,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,B,Lucy Hughes," "
+Shrewsbury,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,B," "," "
+Telford,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,B,Nana Ayah,6.08
+Wenlock,U13,Girls,Field Event 1,STANDING TRIPLE JUMP,B,Maria Frankel,4.68
+Oswestry,U13,Girls,Field Event 2,VERTICAL JUMP,A,Gabriella Inglis-Downes,45
+Shrewsbury,U13,Girls,Field Event 2,VERTICAL JUMP,A," "," "
+Telford,U13,Girls,Field Event 2,VERTICAL JUMP,A,Blanka Podgorska,42
+Wenlock,U13,Girls,Field Event 2,VERTICAL JUMP,A,Eabha Munslow,33
+Oswestry,U13,Girls,Field Event 2,VERTICAL JUMP,B,Evie Baillie,36
+Shrewsbury,U13,Girls,Field Event 2,VERTICAL JUMP,B," "," "
+Telford,U13,Girls,Field Event 2,VERTICAL JUMP,B,Jessica Barrett,44
+Wenlock,U13,Girls,Field Event 2,VERTICAL JUMP,B," "," "
+Oswestry,U13,Boys,Field Event 1,VERTICAL JUMP,A," "," "
+Shrewsbury,U13,Boys,Field Event 1,VERTICAL JUMP,A,Archie Cooper,47
+Telford,U13,Boys,Field Event 1,VERTICAL JUMP,A,Cody Sandland,40
+Wenlock,U13,Boys,Field Event 1,VERTICAL JUMP,A,Owen Hart,43
+Oswestry,U13,Boys,Field Event 1,VERTICAL JUMP,B," "," "
+Shrewsbury,U13,Boys,Field Event 1,VERTICAL JUMP,B,Ethan Duffner,37
+Telford,U13,Boys,Field Event 1,VERTICAL JUMP,B,Harley Gordon,48
+Wenlock,U13,Boys,Field Event 1,VERTICAL JUMP,B," "," "
+Oswestry,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,A,Dylan Grimley,4.48
+Shrewsbury,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,A," "," "
+Telford,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,A,Zach Hatch,5.54
+Wenlock,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,A,Sion Williams,5.56
+Oswestry,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,B," "," "
+Shrewsbury,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,B," "," "
+Telford,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,B,Jack Hughes,5.18
+Wenlock,U13,Boys,Field Event 2,STANDING TRIPLE JUMP,B,Thomas Broom,4.38
+Oswestry,U15,Girls,Field Event 1,SPEED BOUNCE,A,Erin Woolcock,76
+Shrewsbury,U15,Girls,Field Event 1,SPEED BOUNCE,A," "," "
+Telford,U15,Girls,Field Event 1,SPEED BOUNCE,A,Gangotri Skariah,62
+Wenlock,U15,Girls,Field Event 1,SPEED BOUNCE,A," "," "
+Oswestry,U15,Girls,Field Event 1,SPEED BOUNCE,B,Lily Bowen,70
+Shrewsbury,U15,Girls,Field Event 1,SPEED BOUNCE,B," "," "
+Telford,U15,Girls,Field Event 1,SPEED BOUNCE,B,Chizua Ude,64
+Wenlock,U15,Girls,Field Event 1,SPEED BOUNCE,B," "," "
+Oswestry,U15,Girls,Field Event 2,SHOT,A,Poppy Ashworth,4.1
+Shrewsbury,U15,Girls,Field Event 2,SHOT,A," "," "
+Telford,U15,Girls,Field Event 2,SHOT,A,Nayella Simo,6.04
+Wenlock,U15,Girls,Field Event 2,SHOT,A," "," "
+Oswestry,U15,Girls,Field Event 2,SHOT,B,Jodie Addinall,4.71
+Shrewsbury,U15,Girls,Field Event 2,SHOT,B," "," "
+Telford,U15,Girls,Field Event 2,SHOT,B,Sarah Clarke,7.18
+Wenlock,U15,Girls,Field Event 2,SHOT,B," "," "
+Oswestry,U15,Boys,Field Event 1,SHOT,A," "," "
+Shrewsbury,U15,Boys,Field Event 1,SHOT,A," "," "
+Telford,U15,Boys,Field Event 1,SHOT,A,Ralph Brown,7.12
+Wenlock,U15,Boys,Field Event 1,SHOT,A,Zac Winnal,6.32
+Oswestry,U15,Boys,Field Event 1,SHOT,B," "," "
+Shrewsbury,U15,Boys,Field Event 1,SHOT,B," "," "
+Telford,U15,Boys,Field Event 1,SHOT,B," "," "
+Wenlock,U15,Boys,Field Event 1,SHOT,B," "," "
+Oswestry,U15,Boys,Field Event 2,SPEED BOUNCE,A,Harry Tidridge,80
+Shrewsbury,U15,Boys,Field Event 2,SPEED BOUNCE,A,Toby Aston,61
+Telford,U15,Boys,Field Event 2,SPEED BOUNCE,A,Ritwik Skariah,59
+Wenlock,U15,Boys,Field Event 2,SPEED BOUNCE,A," "," "
+Oswestry,U15,Boys,Field Event 2,SPEED BOUNCE,B,William Jones,65
+Shrewsbury,U15,Boys,Field Event 2,SPEED BOUNCE,B," "," "
+Telford,U15,Boys,Field Event 2,SPEED BOUNCE,B," "," "
+Wenlock,U15,Boys,Field Event 2,SPEED BOUNCE,B," "," "

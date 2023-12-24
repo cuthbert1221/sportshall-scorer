@@ -14,6 +14,7 @@ export default interface ElectronApi {
   getEventSignupClub: (query: string) => Promise<any>,
   getEvents: (query: string) => Promise<any>,
   getEventsDefaultOrder: (query: string) => Promise<any>,
+  getClubPointsVenue: (query: string) => Promise<any>,
   getEvent: (query: string) => Promise<any>,
   rankTeamSheet: (query: string) => Promise<any>,
 }

@@ -91,6 +91,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('get-athlete-total-score-venue', athlete_id, venue);
     return result;
   },
+  rankClubTotalVenue: async (venue) => {
+    const result = await ipcRenderer.invoke('rankClubTotalVenue', venue);
+    return result;
+  },
+  getClubPointsVenue: async (venue) => {
+    const result = await ipcRenderer.invoke('getClubPointsVenue', venue);
+    return result;
+  },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),
-    fetchData: (type) => ipcRenderer.invoke('fetch-data', type)
+  fetchData: (type) => ipcRenderer.invoke('fetch-data', type)
 })

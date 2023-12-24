@@ -1,12 +1,13 @@
 import {app, BrowserWindow, ipcMain, session} from 'electron';
 import {join} from 'path';
-import { Athlete, EventDetails, EventSignup } from './interfaces.js';
-export interface EventInstances  {
-  eventDetail_name: string;
-  venue_id : number;
-  agegroup: string;
-  gender: string;
-}
+import { Athlete, EventDetails, EventSignup, EventInstances } from './interfaces.js';
+import sqlite3 from 'sqlite3';
+import { parse } from 'papaparse';
+import { readFileSync } from 'fs';
+import { createDatabase, insertClubsAndVenues } from './DatabaseUtils.js';
+
+const DB_PATH = './path_to_new_database.db';
+
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -49,7 +50,6 @@ app.whenReady().then(() => {
   });
 });
 
-const DB_PATH = './path_to_new_database.db';
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
@@ -98,7 +98,6 @@ async function insertEventDetail(db: sqlite3.Database, event: EventDetails): Pro
   });
 }
 
-import sqlite3 from 'sqlite3';
 
 ipcMain.handle('create-event-instance', async (event, form: any) => {
   // Handle event instance creation in SQLite database
@@ -153,7 +152,8 @@ async function openDatabase(): Promise<sqlite3.Database> {
   });
 }
 
-async function insertAthlete(db: sqlite3.Database, athlete: Athlete): Promise<number> {
+async function insertAthlete(athlete: Athlete): Promise<any> {
+  const db = await openDatabase();
   const sql = `INSERT INTO Athletes (fullname, club, agegroup, gender) VALUES (?, ?, ?, ?)`;
   return new Promise((resolve, reject) => {
     db.run(sql, [athlete.fullname, athlete.club, athlete.agegroup, athlete.gender], function(err) {
@@ -165,6 +165,8 @@ async function insertAthlete(db: sqlite3.Database, athlete: Athlete): Promise<nu
         resolve(this.lastID);
       }
     });
+  }).finally(() => {
+    db.close();
   });
 }
 
@@ -185,384 +187,13 @@ async function closeDatabase(db: sqlite3.Database): Promise<void> {
 async function addAthlete(athlete: Athlete): Promise<number | string> {
   let db: sqlite3.Database;
   try {
-    db = await openDatabase();
-    const id = await insertAthlete(db, athlete);
-    await closeDatabase(db);
+    const id = await insertAthlete(athlete);
     return id;
   } catch (error) {
     return error as string;
   }
 }
 
-// Function to create a new database and initialize tables
-function createDatabase(): void {
-  // Open (or create if it doesn't exist) a SQLite database
-  let db = new sqlite3.Database(DB_PATH, (err) => {
-      if (err) {
-          console.error(err.message);
-          return;
-      }
-      console.log('Connected to the SQLite database.');
-  });
-
-  // SQL query to create the Athletes table
-  const createAthletesTableSql = `
-      CREATE TABLE IF NOT EXISTS Athletes (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          fullname TEXT NOT NULL,
-          club TEXT NOT NULL,
-          agegroup TEXT NOT NULL,
-          gender TEXT NOT NULL
-      );
-  `;
-
-  // SQL query to create the Events table
-  const createEventDetailsTableSql = `
-    CREATE TABLE IF NOT EXISTS EventDetails (
-      name TEXT PRIMARY KEY,
-      type TEXT NOT NULL,
-      scoringMethod TEXT NOT NULL,
-      number_attempts INTEGER NOT NULL,
-      maxFractionDigits INTEGER NOT NULL
-  );
-  `;
-
-
-  // Execute the Athletes table creation query
-  db.run(createAthletesTableSql, (err) => {
-      if (err) {
-          console.error(err.message);
-          return;
-      }
-      console.log("Athletes table created or already exists.");
-  });
-
-  // Execute the Events table creation query
-  db.run(createEventDetailsTableSql, (err) => {
-      if (err) {
-          console.error(err.message);
-          return;
-      }
-      console.log("Events table created or already exists.");
-  });
-  // SQL query to create the Clubs table
-  const createClubsTableSql = `
-      CREATE TABLE IF NOT EXISTS Clubs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE
-      );
-  `;
-
-  // Execute the Clubs table creation query
-  db.run(createClubsTableSql, (err) => {
-      if (err) {
-          console.error(err.message);
-          return;
-      }
-      console.log("Clubs table created or already exists.");
-
-      // Array of club names
-      const clubs = ['Club 1', 'Club 2', 'Club 3'];
-
-      // SQL query to insert a club into the Clubs table
-      const insertClubSql = `INSERT OR IGNORE INTO Clubs (name) VALUES (?)`;
-
-      // Iterate over the clubs array and insert each club into the Clubs table
-      clubs.forEach((club) => {
-          db.run(insertClubSql, club, (err) => {
-              if (err) {
-                  console.error(err.message);
-                  return;
-              }
-              console.log(`Club ${club} inserted or already exists.`);
-          });
-      });
-  });
-  const createVenuesTableSql = `
-    CREATE TABLE IF NOT EXISTS Venues (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE,
-      date TEXT NOT NULL
-    );
-  `;
-
-  // Execute the Venues table creation query
-  db.run(createVenuesTableSql, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("Venues table created or already exists.");
-
-    // Array of venue names and dates
-    const venues = [
-      { name: 'Venue 1', date: '2022-01-01' },
-      { name: 'Venue 2', date: '2022-02-01' },
-      { name: 'Venue 3', date: '2022-03-01' },
-    ];
-
-    // SQL query to insert a venue into the Venues table
-    const insertVenueSql = `INSERT OR IGNORE INTO Venues (name, date) VALUES (?, ?)`;
-
-    // Iterate over the venues array and insert each venue into the Venues table
-    venues.forEach((venue) => {
-      db.run(insertVenueSql, [venue.name, venue.date], (err) => {
-        if (err) {
-          console.error(err.message);
-          return;
-        }
-        console.log(`Venue ${venue.name} inserted or already exists.`);
-      });
-    });
-  });
-
-
-  const createEventInstancesTableSql = `
-    CREATE TABLE IF NOT EXISTS EventInstances (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      eventDetail_name TEXT NOT NULL,
-      venue_id INTEGER NOT NULL,
-      agegroup TEXT NOT NULL,
-      gender TEXT NOT NULL,
-      display_order INTEGER,
-      clubMaxAthletes INTEGER NOT NULL DEFAULT 2,
-      FOREIGN KEY (eventDetail_name) REFERENCES EventDetails (name)
-      FOREIGN KEY (venue_id) REFERENCES Venues(id)
-    );
-  `;
-
-  db.run(createEventInstancesTableSql, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("EventInstances table created or already exists.");
-  });
-
-  const createEventSignUpsTableSql = `
-  CREATE TABLE IF NOT EXISTS EventSignUps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id INTEGER NOT NULL,
-    club_id INTEGER NOT NULL,
-    athlete_id INTEGER NOT NULL,
-    athlete_type CHAR(1) NOT NULL, -- 'A' for athlete, 'B' for second athlete
-    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-    FOREIGN KEY (club_id) REFERENCES Clubs(id),
-    FOREIGN KEY (athlete_id) REFERENCES Athletes(id)
-  );
-`;
-
-  // Execute the EventSignUps table creation query
-  db.run(createEventSignUpsTableSql, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("EventSignUps table created or already exists.");
-  });
-
-  const createEventAttemptsTableSql = `
-    CREATE TABLE IF NOT EXISTS EventAttempts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      athlete_id INTEGER NOT NULL,
-      event_id INTEGER NOT NULL,
-      attempt_number INTEGER NOT NULL,
-      result TEXT NOT NULL,
-      UNIQUE(event_id, athlete_id, attempt_number),
-      FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-      FOREIGN KEY (athlete_id) REFERENCES Athletes(id)
-    );
-  `;
-
-  // Execute the EventAttempts table creation query
-  db.run(createEventAttemptsTableSql, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("EventAttempts table created or already exists.");
-  });
-
-  const createEventPositionsSql = `
-  CREATE TABLE IF NOT EXISTS EventPositions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      event_id INTEGER NOT NULL,
-      athlete_id INTEGER NOT NULL,
-      position INTEGER NOT NULL,
-      scoring_type String,
-      FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
-      FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-      UNIQUE(athlete_id, event_id)
-  );
-  `;
-
-  // Execute the EventAttempts table creation query
-  db.run(createEventPositionsSql, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("EventPositions table created or already exists.");
-  });
-
-  const createEventPoints = `
-  CREATE TABLE IF NOT EXISTS EventPoints (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    venue_id INTEGER NOT NULL,
-    event_id INTEGER NOT NULL,
-    athlete_id INTEGER NOT NULL,
-    points INTEGER NOT NULL,
-    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-    FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
-    FOREIGN KEY (venue_id) REFERENCES Venues(id),
-    UNIQUE(athlete_id, event_id)
-);`;
-
-  // Execute the EventAttempts table creation query
-  db.run(createEventPoints, (err) => {
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    console.log("EventPoints table created or already exists.");
-  });
-
-  const createEventRelayAttemptsTableSql = `
-  CREATE TABLE IF NOT EXISTS EventRelayAttempts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    club_id INTEGER NOT NULL,
-    event_id INTEGER NOT NULL,
-    result TEXT NOT NULL,
-    UNIQUE(event_id, club_id),
-    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-    FOREIGN KEY (club_id) REFERENCES Clubs(id)
-  );
-`;
-
-// Execute the EventAttempts table creation query
-db.run(createEventRelayAttemptsTableSql, (err) => {
-  if (err) {
-    console.error(err.message);
-    return;
-  }
-  console.log("EventAttempts table created or already exists.");
-});
-
-const createEventRelayPositionsSql = `
-CREATE TABLE IF NOT EXISTS EventRelayPositions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id INTEGER NOT NULL,
-    club_id INTEGER NOT NULL,
-    position INTEGER NOT NULL,
-    scoring_type String,
-    FOREIGN KEY (club_id) REFERENCES Clubs(id),
-    FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-    UNIQUE(club_id, event_id)
-);
-`;
-
-// Execute the EventAttempts table creation query
-db.run(createEventRelayPositionsSql, (err) => {
-  if (err) {
-    console.error(err.message);
-    return;
-  }
-  console.log("EventPositions table created or already exists.");
-});
-
-const createEventRelayPoints = `
-CREATE TABLE IF NOT EXISTS  EventRelayPoints (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  venue_id INTEGER NOT NULL,
-  event_id INTEGER NOT NULL,
-  club_id INTEGER NOT NULL,
-  points INTEGER NOT NULL,
-  FOREIGN KEY (event_id) REFERENCES EventInstances(id),
-  FOREIGN KEY (club_id) REFERENCES Clubs(id),
-  FOREIGN KEY (venue_id) REFERENCES Venues(id),
-  UNIQUE(club_id, event_id)
-);`;
-
-// Execute the EventAttempts table creation query
-db.run(createEventRelayPoints, (err) => {
-  if (err) {
-    console.error(err.message);
-    return;
-  }
-  console.log("EventPoints table created or already exists.");
-});
-
-const createTotalPoints = `
-CREATE TABLE IF NOT EXISTS TotalPoints (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  venue_id INTEGER NOT NULL,
-  club_id INTEGER NOT NULL,
-  points INTEGER NOT NULL,
-  agegroup TEXT NOT NULL, -- e.g., U11B, U11G, Mixed
-  gender TEXT NOT NULL, -- e.g., Boys, Girls, Mixed
-  FOREIGN KEY (club_id) REFERENCES Clubs(id),
-  FOREIGN KEY (venue_id) REFERENCES Venues(id),
-  UNIQUE(club_id, venue_id, agegroup, gender)
-);`;
-
-// Execute the createTotalPoints table creation query
-db.run(createTotalPoints, (err) => {
-  if (err) {
-    console.error(err.message);
-    return;
-  }
-  console.log("TotalPoints table created or already exists.");
-});
-
-const createTotalAthletePoints = `
-CREATE TABLE IF NOT EXISTS TotalAthletePoints (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  venue_id INTEGER NOT NULL,
-  athlete_id INTEGER NOT NULL,
-  points INTEGER NOT NULL,
-  FOREIGN KEY (athlete_id) REFERENCES Athletes(id),
-  FOREIGN KEY (venue_id) REFERENCES Venues(id),
-  UNIQUE(athlete_id, venue_id)
-);`;
-
-//Execute the createTotalAthletePoints table creation query
-db.run(createTotalAthletePoints, (err) => {
-  if (err) {
-    console.error(err.message);
-    return;
-  }
-  console.log("TotalAthletePoints table created or already exists.");
-});
-
-//   const createCategoryRankingPosition = `
-//   CREATE TABLE IF NOT EXISTS CategoryRankingPosition (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     venue TEXT NOT NULL,
-//     agegroup TEXT NOT NULL, -- e.g., U11B, U11G, Mixed
-//     gender TEXT NOT NULL, -- e.g., Boys, Girls, Mixed
-//     club TEXT NOT NULL,
-//     points INTEGER NOT NULL,
-//     UNIQUE(venue, agegroup, gender, club)
-// );`;
-
-  // Execute the EventAttempts table creation query
-  // db.run(createCategoryRankingPosition, (err) => {
-  //   if (err) {
-  //     console.error(err.message);
-  //     return;
-  //   }
-  //   console.log("CategoryRankingPosition table created or already exists.");
-  // });
-
-  // Close the database connection
-  db.close((err) => {
-      if (err) {
-          console.error(err.message);
-          return;
-      }
-      console.log('Closed the database connection.');
-  });
-}
 
 ipcMain.handle('update-multiple-events-order', async (event, eventsOrder) => {
   // eventsOrder is an array of { eventId, newOrder }
@@ -618,7 +249,7 @@ ipcMain.handle('fetch-data', async (event, type) => {
   const db = new sqlite3.Database(DB_PATH);
   let query = '';
   if (type === 'athletes') {
-    query = "SELECT * FROM Athletes";
+    query = "SELECT Athletes.*, Clubs.name AS club_name FROM Athletes INNER JOIN Clubs ON Athletes.club = Clubs.id";
   } else if (type === 'eventDetails') {
     query = "SELECT * FROM EventDetails";
   } else if (type === 'eventInstances') {
@@ -667,9 +298,10 @@ ipcMain.handle('get-event-signups', async (event, eventId) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(
-      `SELECT EventSignUps.id, athlete_type, Athletes.id AS athlete_id, Athletes.fullname AS athlete_name 
+      `SELECT EventSignUps.id, athlete_type, Athletes.id AS athlete_id, Athletes.fullname AS athlete_name, Clubs.name AS club_name
        FROM EventSignUps 
-       INNER JOIN Athletes ON EventSignUps.athlete_id = Athletes.id 
+       INNER JOIN Athletes ON EventSignUps.athlete_id = Athletes.id
+       INNER JOIN Clubs ON Athletes.club = Clubs.id 
        WHERE EventSignUps.event_id = ?`,
       [eventId],
       (err, rows) => {
@@ -686,7 +318,13 @@ ipcMain.handle('get-event-signups', async (event, eventId) => {
 });
 
 ipcMain.handle('get-events', async (event, venue) => {
-  const venue_id = await getVenueID(venue);
+  return await getEvents(venue);
+});
+
+async function getEvents(venue: string, venue_id?: number): Promise<any> {
+  if (!venue_id) {
+    venue_id = await getVenueID(venue);
+  }
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(
@@ -707,7 +345,7 @@ ipcMain.handle('get-events', async (event, venue) => {
   }).finally(() => {
     db.close();
   });
-});
+}
 
 ipcMain.handle('get-events-default-order', async (event, venue) => {
   const venue_id = await getVenueID(venue);
@@ -790,6 +428,11 @@ interface CountRow {
 }
 
 ipcMain.handle('insert-event-signup', async (event, eventId, clubId, athleteId, athlete_type, relay = false) => {
+  return await insertEventSignup(eventId, clubId, athleteId, athlete_type, relay)
+});
+
+async function insertEventSignup(eventId, clubId, athleteId, athlete_type, relay = false): Promise<any> {
+  console.log(relay);
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.get(
@@ -830,8 +473,13 @@ ipcMain.handle('insert-event-signup', async (event, eventId, clubId, athleteId, 
   }).finally(() => {
     db.close();
   });
-});
+}
+
 ipcMain.handle('create-event-attempt', async (event, athlete_id, event_id, attemptNumber, result) => {
+  return await createEventAttempt(athlete_id, event_id, attemptNumber, result)
+});
+
+async function createEventAttempt(athlete_id, event_id, attemptNumber, result) {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
       db.run(
@@ -847,8 +495,13 @@ ipcMain.handle('create-event-attempt', async (event, athlete_id, event_id, attem
   }).finally(() => {
     db.close();
   });
-});
+}
+
 ipcMain.handle('create-event-relay-attempt', async (event, club_id, event_id, result) => {
+  return await createEventRelayAttempt(club_id, event_id, result)
+});
+
+async function createEventRelayAttempt(club_id, event_id, result) {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
       db.run(
@@ -864,7 +517,7 @@ ipcMain.handle('create-event-relay-attempt', async (event, club_id, event_id, re
   }).finally(() => {
     db.close();
   });
-});
+}
 
 ipcMain.handle('delete-event-attempt', async (event, athlete_id, event_id, attemptNumber) => {
   const db = await openDatabase();
@@ -1253,6 +906,23 @@ async function getVenueID(name): Promise<any> {
     db.close();
   });
 }
+
+async function getVenues(): Promise<any> {
+  const db = await openDatabase();
+  return new Promise<any>((resolve, reject) => {
+    db.all(`SELECT * FROM Venues`, [],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);  // Resolve the first row
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
 async function getEventSignupUserClub(signupId): Promise<any> {
   console.log("signupId: " + signupId);
   const db = await openDatabase();
@@ -1386,8 +1056,7 @@ async function deleteEventRelayPosition(eventId: number): Promise<void> {
     db.close();
   });
 }
-// Call the function to create the database
-createDatabase();
+
 
 
 
@@ -1692,9 +1361,14 @@ async function clubsTotalVenue(venue_id) {
     db.close();
   });
 }
-async function getClubsTotalVenue(venue_id) {
+
+interface ClubTotalPoints {
+  club: string;
+  total_points: number;
+}
+async function getClubsTotalVenue(venue_id): Promise<ClubTotalPoints[]> {
   const db = await openDatabase();
-  return new Promise((resolve, reject) => {
+  return new Promise<ClubTotalPoints[]>((resolve, reject) => {
     db.all(
       `SELECT Athletes.club, SUM(EventPoints.points) as total_points
        FROM EventPoints
@@ -1703,7 +1377,7 @@ async function getClubsTotalVenue(venue_id) {
        GROUP BY Athletes.club
        ORDER BY total_points DESC`,
       [venue_id],
-      (err, rows) => {
+      (err, rows: ClubTotalPoints[]) => {
         if (err) {
           reject(err);
         } else {
@@ -1714,4 +1388,345 @@ async function getClubsTotalVenue(venue_id) {
   }).finally(() => {
     db.close();
   });
+}
+
+async function getClubRelayTotalVenue(venue_id, club): Promise<any> {
+  const db = await openDatabase();
+  return new Promise<any>((resolve, reject) => {
+    db.all(
+      `SELECT club_id, SUM(points) as points
+      FROM EventRelayPoints
+      WHERE venue_id = ? AND club_id = ?
+      GROUP BY club_id`,
+      [venue_id, club],
+      (err, rows: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows[0]);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+
+ipcMain.handle('rankClubTotalVenue', async (event, venue_id) => {
+  return await rankClubTotalVenue(venue_id);
+});
+
+async function rankClubTotalVenue(venue_id): Promise<any> {
+  // Delete all records in the EventPositions table with a specific eventId
+  const clubs: ClubTotalPoints[] = await getClubsTotalVenue(venue_id);
+  console.log(venue_id);
+  for (let club of clubs) {
+    let club_points = club.total_points
+    let relay_club_points = await getClubRelayTotalVenue(venue_id, club.club)
+    if(relay_club_points){
+      club_points = club.total_points + relay_club_points.points;
+    }
+    await createOrUpdateClubTotalVenue({ club: club.club, total_points: club_points, venue_id: venue_id });
+  }
+}
+
+async function createOrUpdateClubTotalVenue({ club, total_points, venue_id }): Promise<void> {
+  const db = await openDatabase();
+  return new Promise<void>((resolve, reject) => {
+    db.run(`
+      INSERT INTO TotalPoints (club_id, points, venue_id, agegroup, gender) 
+      VALUES (?, ?, ?, ?, ?) 
+      ON CONFLICT(club_id, venue_id, agegroup, gender) 
+      DO UPDATE SET points = excluded.points
+    `, [club, total_points, venue_id, 'Mixed', 'Mixed'], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+ipcMain.handle('getClubPointsVenue', async (event, venue_id) => {
+  return await getClubPointsVenue(venue_id);
+});
+
+async function getClubPointsVenue(venue_id: number): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`SELECT TotalPoints.*, Clubs.name 
+    FROM TotalPoints 
+    INNER JOIN Clubs ON TotalPoints.club_id = Clubs.id 
+    WHERE TotalPoints.venue_id = ? AND TotalPoints.agegroup = ? AND TotalPoints.gender = ? 
+    ORDER BY TotalPoints.points DESC`,  [venue_id, "Mixed", "Mixed"], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+
+let countings = 0;
+async function processTrackEventCSV(filePath: string) {
+  const fileContent = readFileSync(filePath, 'utf8');
+  const parsedData = parse(fileContent, { header: true }).data;
+
+  for (const row of parsedData) {
+    await processRowTrack(row);
+  }
+}
+async function processRowTrack(row: any) {
+  try {
+  if (row.Name == '' || row.Name == ' ') return;
+
+  let type: string;
+  let relay: boolean;
+  let clubMaxAthletes: number;
+  if (row.Event.includes("Relay")) {
+    type = "Relay";
+    relay = true;
+    clubMaxAthletes = 4;
+  } else if (row.Event.includes("Paarlouf")) {
+    type = "Paarlouf";
+    clubMaxAthletes = 2;
+    relay = false;
+  } else {
+    type = "Track";
+    clubMaxAthletes = 2;
+    relay = false;
+  }
+
+  const club_id = await getClubId(row.Club);
+  const gender = row.Gender.slice(0, -1)
+  if (!club_id) {
+    return;
+  }
+  if (type != "Relay") {
+    var athlete = await getAthleteDetails(row.Name, club_id, row.Age, gender);
+    if (!athlete) {
+      const athlete_insert = {fullname: row.Name, club: club_id.toString(), agegroup: row.Age, gender: gender}
+      await insertAthlete(athlete_insert)
+      athlete = await getAthleteDetails(row.Name, club_id, row.Age, gender);
+    }
+  }
+  const venue_id = await getVenueID('Venue 1');
+  const eventDetailId = await findOrCreateEventDetail({ name: row.Event, type: type, scoringMethod: 'Lowest', number_attempts: 1, maxFractionDigits: 2 });
+  const eventInstanceId = await findOrCreateEventInstance({eventDetail_name: row.Event, venue_id: venue_id, agegroup: row.Age, gender: gender, clubMaxAthletes: clubMaxAthletes})
+
+  try {
+    if (type != "Relay") {
+        await insertEventSignup(eventInstanceId, club_id, athlete.id, row.Race, false)
+    }
+  } catch (err) {
+    console.error(err);
+    //return
+  }
+
+  const timeInSeconds = convertTimeToSeconds(row.Time);
+  if (type != "Relay") {
+    await createEventAttempt(athlete.id, eventInstanceId, 1, timeInSeconds);
+  } else {
+    await createEventRelayAttempt(club_id, eventInstanceId, timeInSeconds)
+  }
+
+  } catch (err) {
+    console.error(`Error processing row: ${JSON.stringify(row)}`);
+    console.error(err);
+  }
+    //const eventDetailId = await ensureEventDetail(db, row.Event);
+    //const eventInstanceId = await ensureEventInstance(db, eventDetailId, row.Age, row.Gender, row.Label);
+    // Insert EventSignup and Attempt
+
+}
+
+async function processFieldEventCSV(filePath: string) {
+  const fileContent = readFileSync(filePath, 'utf8');
+  const parsedData = parse(fileContent, { header: true }).data;
+
+  for (const row of parsedData) {
+    await processRowField(row);
+  }
+}
+
+async function processRowField(row: any) {
+  try {
+  if (row.Name == '' || row.Name == ' ') return;
+  const club_id = await getClubId(row.Club);
+  const gender = row.Gender.slice(0, -1)
+  if (!club_id) {
+    return;
+  }
+  var athlete = await getAthleteDetails(row.Name, club_id, row.Age, gender);
+  if (!athlete) {
+    const athlete_insert = {fullname: row.Name, club: club_id.toString(), agegroup: row.Age, gender: gender}
+    await insertAthlete(athlete_insert)
+    athlete = await getAthleteDetails(row.Name, club_id, row.Age, gender);
+  }
+  let type: string;
+  let relay: boolean;
+  let clubMaxAthletes: number;
+  type = "Track";
+  clubMaxAthletes = 2;
+  relay = false;
+  const venue_id = await getVenueID('Venue 1');
+  const eventDetailId = await findOrCreateEventDetail({ name: row.Event, type: type, scoringMethod: 'Highest', number_attempts: 1, maxFractionDigits: 2 });
+  const eventInstanceId = await findOrCreateEventInstance({eventDetail_name: row.Event, venue_id: venue_id, agegroup: row.Age, gender: gender, clubMaxAthletes: clubMaxAthletes})
+
+  try {
+    await insertEventSignup(eventInstanceId, club_id, athlete.id, row.Race, false)
+  } catch (err) {
+    console.error(err);
+    //return
+  }
+
+  await createEventAttempt(athlete.id, eventInstanceId, 1, row.Performance);
+
+  } catch (err) {
+    console.error(`Error processing row: ${JSON.stringify(row)}`);
+    console.error(err);
+  }
+    //const eventDetailId = await ensureEventDetail(db, row.Event);
+    //const eventInstanceId = await ensureEventInstance(db, eventDetailId, row.Age, row.Gender, row.Label);
+    // Insert EventSignup and Attempt
+
+}
+
+
+
+interface RowID {
+  id: number;
+}
+
+function convertTimeToSeconds(time: string): number {
+  const [minutes, seconds] = time.split(':');
+  return Number(minutes) * 60 + Number(seconds);
+}
+
+async function getClubId(name): Promise<number | null> {
+  const db = await openDatabase();
+  return new Promise<number | null>((resolve, reject) => {
+    db.get('SELECT id FROM Clubs Where name = ?', [name], (err, row: { id: number }) => {
+      if (err) {
+        resolve(null);
+      } else {
+        resolve(row ? row.id : null);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+async function getAthleteDetails(athlete_name: string, club_id, agegroup, gender): Promise<any> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT Athletes.*, Clubs.id as club_id, Clubs.name as club_name
+       FROM Athletes 
+       INNER JOIN Clubs ON Athletes.club = Clubs.id 
+       WHERE Athletes.fullname = ? AND Athletes.club = ? AND Athletes.agegroup = ? AND Athletes.gender = ?`,
+      [athlete_name, club_id, agegroup, gender],
+      (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+async function findOrCreateEventDetail(eventDetail: EventDetails): Promise<number> {
+  const db = await openDatabase();
+  return new Promise<any>((resolve, reject) => {
+    db.get(
+      `SELECT * FROM EventDetails WHERE name = ? LIMIT 1`,
+      [eventDetail.name],
+      (err, row: EventDetails) => {
+        if (err) {
+          reject(err);
+        } else if (!row) {
+          db.run(
+            `INSERT INTO EventDetails (name, type, scoringMethod, number_attempts, maxFractionDigits) VALUES (?, ?, ?, ?, ?)`,
+            [eventDetail.name, eventDetail.type, eventDetail.scoringMethod, eventDetail.number_attempts, eventDetail.maxFractionDigits],
+            function(err) {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(this.lastID);
+              }
+            }
+          );
+        } else {
+          resolve(row.id);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+async function findOrCreateEventInstance(eventInstance: EventInstances): Promise<number> {
+  const db = await openDatabase();
+  return new Promise<any>((resolve, reject) => {
+    db.get(
+      `SELECT * FROM EventInstances WHERE eventDetail_name = ? AND venue_id = ? AND agegroup = ? AND gender = ? LIMIT 1`,
+      [eventInstance.eventDetail_name, eventInstance.venue_id, eventInstance.agegroup, eventInstance.gender],
+      (err, row: EventDetails) => {
+        if (err) {
+          reject(err);
+        } else if (!row) {
+          db.run(
+            `INSERT INTO EventInstances (eventDetail_name, venue_id, agegroup, gender, clubMaxAthletes) VALUES (?, ?, ?, ?, ?)`,
+            [eventInstance.eventDetail_name, eventInstance.venue_id, eventInstance.agegroup, eventInstance.gender, eventInstance.clubMaxAthletes],
+            function(err) {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(this.lastID);
+              }
+            }
+          );
+        } else {
+          resolve(row.id);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+
+async function loopEventsResults(): Promise<void> {
+  const venues = await getVenues()
+
+  for (const venue of venues) {
+    const events = await getEvents("N/A", venue.id)
+
+    for (const event of events) {
+      await rankSignups(event.id);
+      await eventPoints(event.id);
+      await eventPointsRelay(event.id);
+    }
+  }
+
+}
+setUpDatabase()
+async function setUpDatabase() {
+  await createDatabase(DB_PATH);
+  await insertClubsAndVenues(DB_PATH)
+  // Seeder
+  await processTrackEventCSV("trackFile.csv")
+  await processFieldEventCSV("fieldFile.csv")
+  await loopEventsResults()
 }

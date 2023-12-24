@@ -32,6 +32,7 @@ export interface EventSignup {
   }
 
 export interface EventDetails {
+    id?: number;
     name: string;
     type: string;
     scoringMethod: string; 
@@ -40,9 +41,11 @@ export interface EventDetails {
   }
 export interface EventInstances  {
   eventDetail_name: string;
-  venue_name : string;
+  venue_id : number;
   agegroup: string;
   gender: string;
+  clubMaxAthletes? : number;
+  display_order?: number;
 }
 
   

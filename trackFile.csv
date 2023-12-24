@@ -1,0 +1,169 @@
+Club,Age,Gender,Label,Event,Race,Name,Time
+Oswestry,U11,Girls,Track Event 1,2 Lap Hurdles,A,Edith John,00:31.0
+Shrewsbury,U11,Girls,Track Event 1,2 Lap Hurdles,A,Evelyn Hulme,00:28.0
+Telford,U11,Girls,Track Event 1,2 Lap Hurdles,A,Isla Withers,00:27.1
+Wenlock,U11,Girls,Track Event 1,2 Lap Hurdles,A,Ellie Biggs,00:33.0
+Oswestry,U11,Girls,Track Event 1,2 Lap Hurdles,B," "," "
+Shrewsbury,U11,Girls,Track Event 1,2 Lap Hurdles,B,Grace Turney,00:27.7
+Telford,U11,Girls,Track Event 1,2 Lap Hurdles,B,Bella Beddall,00:28.1
+Wenlock,U11,Girls,Track Event 1,2 Lap Hurdles,B," "," "
+Oswestry,U11,Girls,Track Event 2,2 Laps,A,Ava Walton,00:27.4
+Shrewsbury,U11,Girls,Track Event 2,2 Laps,A,Selina Vuli,00:24.8
+Telford,U11,Girls,Track Event 2,2 Laps,A,"Tabitha Hatch ",00:25.5
+Wenlock,U11,Girls,Track Event 2,2 Laps,A,Ellie Biggs,00:29.9
+Oswestry,U11,Girls,Track Event 2,2 Laps,B," "," "
+Shrewsbury,U11,Girls,Track Event 2,2 Laps,B,Arya Cassini-Jones,00:27.3
+Telford,U11,Girls,Track Event 2,2 Laps,B," "," "
+Wenlock,U11,Girls,Track Event 2,2 Laps,B," "," "
+Oswestry,U11,Girls,Track Event 3,3 Laps,A," "," "
+Shrewsbury,U11,Girls,Track Event 3,3 Laps,A,Lucy Dahn,00:45.1
+Telford,U11,Girls,Track Event 3,3 Laps,A,"Tabitha Hatch ",00:40.5
+Wenlock,U11,Girls,Track Event 3,3 Laps,A," "," "
+Oswestry,U11,Girls,Track Event 3,3 Laps,B," "," "
+Shrewsbury,U11,Girls,Track Event 3,3 Laps,B,Georgie Howson,00:41.9
+Telford,U11,Girls,Track Event 3,3 Laps,B,Cora Ward,00:45.6
+Wenlock,U11,Girls,Track Event 3,3 Laps,B," "," "
+Oswestry,U11,Girls,Track Relay,4x2 Relay,A," "," "
+Shrewsbury,U11,Girls,Track Relay,4x2 Relay,A,ShrewsburyU11Girls,01:48.0
+Telford,U11,Girls,Track Relay,4x2 Relay,A,TelfordU11Girls,01:47.4
+Wenlock,U11,Girls,Track Relay,4x2 Relay,A," "," "
+Oswestry,U11,Boys,Track Event 1,2 Lap Hurdles,A,William Arran,00:28.2
+Shrewsbury,U11,Boys,Track Event 1,2 Lap Hurdles,A," "," "
+Telford,U11,Boys,Track Event 1,2 Lap Hurdles,A,Axel Gordon,00:27.3
+Wenlock,U11,Boys,Track Event 1,2 Lap Hurdles,A,Ben Beard,00:31.2
+Oswestry,U11,Boys,Track Event 1,2 Lap Hurdles,B,Joseph Barlow,00:29.8
+Shrewsbury,U11,Boys,Track Event 1,2 Lap Hurdles,B," "," "
+Telford,U11,Boys,Track Event 1,2 Lap Hurdles,B,Jacob Eiben,00:29.9
+Wenlock,U11,Boys,Track Event 1,2 Lap Hurdles,B,Fionn Munslow,00:28.8
+Oswestry,U11,Boys,Track Event 2,2 Laps,A,Max Jones,00:26.2
+Shrewsbury,U11,Boys,Track Event 2,2 Laps,A,Logan Watkin,00:28.5
+Telford,U11,Boys,Track Event 2,2 Laps,A,Jacob Eiben,00:25.7
+Wenlock,U11,Boys,Track Event 2,2 Laps,A,Isaac Holme,00:24.9
+Oswestry,U11,Boys,Track Event 2,2 Laps,B,Macsen Egerton,00:29.0
+Shrewsbury,U11,Boys,Track Event 2,2 Laps,B,Riley Griffiths,00:28.0
+Telford,U11,Boys,Track Event 2,2 Laps,B,Frankie Ward,00:29.1
+Wenlock,U11,Boys,Track Event 2,2 Laps,B," "," "
+Oswestry,U11,Boys,Track Event 3,3 Laps,A,Seth Baillie,00:43.5
+Shrewsbury,U11,Boys,Track Event 3,3 Laps,A,Alexander Richardson,00:46.6
+Telford,U11,Boys,Track Event 3,3 Laps,A,Frankie Ward,00:44.7
+Wenlock,U11,Boys,Track Event 3,3 Laps,A," "," "
+Oswestry,U11,Boys,Track Event 3,3 Laps,B,Oliver Jones,00:45.9
+Shrewsbury,U11,Boys,Track Event 3,3 Laps,B," "," "
+Telford,U11,Boys,Track Event 3,3 Laps,B," "," "
+Wenlock,U11,Boys,Track Event 3,3 Laps,B," "," "
+Oswestry,U11,Boys,Track Relay,4x2 Relay,A,OswestryU11Boys,01:46.9
+Shrewsbury,U11,Boys,Track Relay,4x2 Relay,A," "," "
+Telford,U11,Boys,Track Relay,4x2 Relay,A," "," "
+Wenlock,U11,Boys,Track Relay,4x2 Relay,A," "," "
+Oswestry,U13,Girls,Track Event 1,2 Laps,A,Lucy Hughes,00:26.6
+Shrewsbury,U13,Girls,Track Event 1,2 Laps,A," "," "
+Telford,U13,Girls,Track Event 1,2 Laps,A,Jessica Barrett,00:25.7
+Wenlock,U13,Girls,Track Event 1,2 Laps,A,Amy Hayward,00:25.0
+Oswestry,U13,Girls,Track Event 1,2 Laps,B," "," "
+Shrewsbury,U13,Girls,Track Event 1,2 Laps,B," "," "
+Telford,U13,Girls,Track Event 1,2 Laps,B,Dionne White,00:25.7
+Wenlock,U13,Girls,Track Event 1,2 Laps,B,Hallie Bunn,00:25.4
+Oswestry,U13,Girls,Track Event 2,3 Laps,A,Gabriella Inglis-Downes,00:39.1
+Shrewsbury,U13,Girls,Track Event 2,3 Laps,A," "," "
+Telford,U13,Girls,Track Event 2,3 Laps,A,Blanka Podgorska,00:39.4
+Wenlock,U13,Girls,Track Event 2,3 Laps,A,Eabha Munslow,00:43.7
+Oswestry,U13,Girls,Track Event 2,3 Laps,B,Evie Griffiths,00:41.5
+Shrewsbury,U13,Girls,Track Event 2,3 Laps,B," "," "
+Telford,U13,Girls,Track Event 2,3 Laps,B,Erica Christiansen,00:40.5
+Wenlock,U13,Girls,Track Event 2,3 Laps,B,Maria Frankel,00:42.2
+Oswestry,U13,Girls,Track Event 3,5 Laps,A,Evie Baillie,01:17.4
+Shrewsbury,U13,Girls,Track Event 3,5 Laps,A," "," "
+Telford,U13,Girls,Track Event 3,5 Laps,A,Daria Vaduva,01:13.5
+Wenlock,U13,Girls,Track Event 3,5 Laps,A,Maria Frankel,01:13.0
+Oswestry,U13,Girls,Track Event 3,5 Laps,B,Gabriella Inglis-Downes,01:11.2
+Shrewsbury,U13,Girls,Track Event 3,5 Laps,B," "," "
+Telford,U13,Girls,Track Event 3,5 Laps,B,Jessica Barrett,01:18.0
+Wenlock,U13,Girls,Track Event 3,5 Laps,B,Hallie Bunn,01:20.2
+Oswestry,U13,Girls,Track Relay,4x2 Relay,A,OswestryU13Girls,01:44.2
+Shrewsbury,U13,Girls,Track Relay,4x2 Relay,A," "," "
+Telford,U13,Girls,Track Relay,4x2 Relay,A,TelfordU13Girls,01:41.8
+Wenlock,U13,Girls,Track Relay,4x2 Relay,A," "," "
+Oswestry,U13,Boys,Track Event 1,2 Laps,A,Dylan Grimley,00:27.6
+Shrewsbury,U13,Boys,Track Event 1,2 Laps,A,Archie Cooper,00:24.5
+Telford,U13,Boys,Track Event 1,2 Laps,A,Harley Gordon,00:25.7
+Wenlock,U13,Boys,Track Event 1,2 Laps,A,Owen Hart,00:25.0
+Oswestry,U13,Boys,Track Event 1,2 Laps,B," "," "
+Shrewsbury,U13,Boys,Track Event 1,2 Laps,B,Ethan Duffner,00:27.1
+Telford,U13,Boys,Track Event 1,2 Laps,B,Dominic Sandland,00:28.0
+Wenlock,U13,Boys,Track Event 1,2 Laps,B,Thomas Broom,00:27.5
+Oswestry,U13,Boys,Track Event 2,3 Laps,A," "," "
+Shrewsbury,U13,Boys,Track Event 2,3 Laps,A,Ethan Duffner,00:44.4
+Telford,U13,Boys,Track Event 2,3 Laps,A,Zach Hatch,00:43.4
+Wenlock,U13,Boys,Track Event 2,3 Laps,A,Sion Williams,00:39.4
+Oswestry,U13,Boys,Track Event 2,3 Laps,B," "," "
+Shrewsbury,U13,Boys,Track Event 2,3 Laps,B,Archie Cooper,00:39.9
+Telford,U13,Boys,Track Event 2,3 Laps,B,Jack Hughes,00:42.1
+Wenlock,U13,Boys,Track Event 2,3 Laps,B,Thomas Broom,00:43.0
+Oswestry,U13,Boys,Track Event 3,5 Laps,A,Dylan Grimley,01:22.8
+Shrewsbury,U13,Boys,Track Event 3,5 Laps,A," "," "
+Telford,U13,Boys,Track Event 3,5 Laps,A,Cody Sandland,01:07.2
+Wenlock,U13,Boys,Track Event 3,5 Laps,A,Owen Hart,01:18.1
+Oswestry,U13,Boys,Track Event 3,5 Laps,B," "," "
+Shrewsbury,U13,Boys,Track Event 3,5 Laps,B," "," "
+Telford,U13,Boys,Track Event 3,5 Laps,B," "," "
+Wenlock,U13,Boys,Track Event 3,5 Laps,B,Sion Williams,01:16.5
+Oswestry,U13,Boys,Track Relay,4x2 Relay,A," "," "
+Shrewsbury,U13,Boys,Track Relay,4x2 Relay,A," "," "
+Telford,U13,Boys,Track Relay,4x2 Relay,A,TelfordU13Boys,01:42.7
+Wenlock,U13,Boys,Track Relay,4x2 Relay,A," "," "
+Oswestry,U15,Girls,Track Event 1,2 Laps,A,Lily Bowen,00:24.8
+Shrewsbury,U15,Girls,Track Event 1,2 Laps,A," "," "
+Telford,U15,Girls,Track Event 1,2 Laps,A,Kadisha Nwachukwa,00:23.2
+Wenlock,U15,Girls,Track Event 1,2 Laps,A,Sydney Purchase,00:23.5
+Oswestry,U15,Girls,Track Event 1,2 Laps,B,Poppy Ashworth,00:26.7
+Shrewsbury,U15,Girls,Track Event 1,2 Laps,B," "," "
+Telford,U15,Girls,Track Event 1,2 Laps,B,Amelia Berzina,00:26.8
+Wenlock,U15,Girls,Track Event 1,2 Laps,B," "," "
+Oswestry,U15,Girls,Track Event 2,3 Laps,A,Poppy Ashworth,00:41.1
+Shrewsbury,U15,Girls,Track Event 2,3 Laps,A," "," "
+Telford,U15,Girls,Track Event 2,3 Laps,A,Nayella Simo,00:43.3
+Wenlock,U15,Girls,Track Event 2,3 Laps,A,Sydney Purchase,00:38.5
+Oswestry,U15,Girls,Track Event 2,3 Laps,B,Erin Woolcock,01:10.0
+Shrewsbury,U15,Girls,Track Event 2,3 Laps,B," "," "
+Telford,U15,Girls,Track Event 2,3 Laps,B,Chizua Ude,00:42.1
+Wenlock,U15,Girls,Track Event 2,3 Laps,B," "," "
+Oswestry,U15,Girls,Track Event 3,5 Laps,A,Erin Woolcock,01:10.0
+Shrewsbury,U15,Girls,Track Event 3,5 Laps,A," "," "
+Telford,U15,Girls,Track Event 3,5 Laps,A,Chizua Ude,01:12.2
+Wenlock,U15,Girls,Track Event 3,5 Laps,A,Sydney Purchase,01:09.4
+Oswestry,U15,Girls,Track Event 3,5 Laps,B,Jodie Addinall,01:12.7
+Shrewsbury,U15,Girls,Track Event 3,5 Laps,B," "," "
+Telford,U15,Girls,Track Event 3,5 Laps,B,Kadisha Nwachukwa,01:10.7
+Wenlock,U15,Girls,Track Event 3,5 Laps,B," "," "
+Oswestry,U15,Girls,Track Relay,4x2 Relay,A,OswestryU15Girls,01:41.1
+Shrewsbury,U15,Girls,Track Relay,4x2 Relay,A," "," "
+Telford,U15,Girls,Track Relay,4x2 Relay,A,TelfordU15Girls,01:43.4
+Wenlock,U15,Girls,Track Relay,4x2 Relay,A," "," "
+Oswestry,U15,Boys,Track Event 1,2 Laps,A,Harry Tidridge,00:23.1
+Shrewsbury,U15,Boys,Track Event 1,2 Laps,A,Toby Aston,00:25.8
+Telford,U15,Boys,Track Event 1,2 Laps,A,Lucas Steer,00:25.5
+Wenlock,U15,Boys,Track Event 1,2 Laps,A,Zac Winnal,00:25.9
+Oswestry,U15,Boys,Track Event 1,2 Laps,B," "," "
+Shrewsbury,U15,Boys,Track Event 1,2 Laps,B," "," "
+Telford,U15,Boys,Track Event 1,2 Laps,B,Ritwik Skariah,00:25.9
+Wenlock,U15,Boys,Track Event 1,2 Laps,B," "," "
+Oswestry,U15,Boys,Track Event 2,3 Laps,A,William Jones,00:42.0
+Shrewsbury,U15,Boys,Track Event 2,3 Laps,A,Toby Aston,00:37.9
+Telford,U15,Boys,Track Event 2,3 Laps,A,Lucas Steer,00:44.8
+Wenlock,U15,Boys,Track Event 2,3 Laps,A,Zac Winnal,00:40.5
+Oswestry,U15,Boys,Track Event 2,3 Laps,B," "," "
+Shrewsbury,U15,Boys,Track Event 2,3 Laps,B," "," "
+Telford,U15,Boys,Track Event 2,3 Laps,B,Ritwik Skariah,00:38.2
+Wenlock,U15,Boys,Track Event 2,3 Laps,B," "," "
+Oswestry,U15,Boys,Track Event 3,5 Laps,A,Harry Tidridge,01:04.1
+Shrewsbury,U15,Boys,Track Event 3,5 Laps,A," "," "
+Telford,U15,Boys,Track Event 3,5 Laps,A," "," "
+Wenlock,U15,Boys,Track Event 3,5 Laps,A," "," "
+Oswestry,U15,Boys,Track Event 3,5 Laps,B,William Jones,01:15.9
+Shrewsbury,U15,Boys,Track Event 3,5 Laps,B," "," "
+Telford,U15,Boys,Track Event 3,5 Laps,B," "," "
+Wenlock,U15,Boys,Track Event 3,5 Laps,B," "," "
+Oswestry,U15,Boys,Track Relay,4x2 Relay,A," "," "
+Shrewsbury,U15,Boys,Track Relay,4x2 Relay,A," "," "
+Telford,U15,Boys,Track Relay,4x2 Relay,A," "," "
+Wenlock,U15,Boys,Track Relay,4x2 Relay,A," "," "
