@@ -6,8 +6,12 @@ import { parse } from 'papaparse';
 import { readFileSync } from 'fs';
 import { createDatabase, insertClubsAndVenues } from './DatabaseUtils.js';
 
-const DB_PATH = './path_to_new_database.db';
-
+let DB_PATH: string;
+if (process.env.NODE_ENV === 'development') {
+  DB_PATH = './path_to_new_database.db';
+} else { 
+  DB_PATH = join(app.getPath('userData'), 'database.db');
+}
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -1726,7 +1730,15 @@ async function setUpDatabase() {
   await createDatabase(DB_PATH);
   await insertClubsAndVenues(DB_PATH)
   // Seeder
-  await processTrackEventCSV("trackFile.csv")
-  await processFieldEventCSV("fieldFile.csv")
+  const path = require('path');
+  var trackFile = path.join(__dirname, 'trackFile.csv');
+  var filedFile = path.join(__dirname, 'fieldFile.csv');
+  if (process.env.NODE_ENV != 'development') {
+    await processTrackEventCSV(trackFile)
+    await processFieldEventCSV(filedFile)
+  } else {
+    await processTrackEventCSV("trackFile.csv")
+    await processFieldEventCSV("fieldFile.csv")
+  } 
   await loopEventsResults()
 }

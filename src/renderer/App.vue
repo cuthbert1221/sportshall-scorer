@@ -4,7 +4,7 @@ import Menu from 'primevue/menu';
 import LeftBar from './components/LeftBar.vue';
 import TopBar from './components/TopBar.vue';
 
-window.electronAPI.sendMessage('Hello from App.vue!');
+//window.electronAPI.sendMessage('Hello from App.vue!');
 
 </script>
 <template>

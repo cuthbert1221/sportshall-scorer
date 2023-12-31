@@ -10,7 +10,6 @@
             <h3>{{ gender }}</h3>
   
             <Panel v-for="event in getEventsFor(ageGroup, gender)" :key="event.id" :header="event.eventDetail_name">
-              {{ event.type }}
               <div v-for="n in event.clubMaxAthletes" :key="n" class="p-fluid">
                 <div class="p-field" v-if="n == 1 || (event.signUps[n - 2] && event.signUps[n - 2].athlete_name) || event.type == 'Relay'">
                   <label for="athlete">Athlete {{ String.fromCharCode(64 + n) }}</label>
