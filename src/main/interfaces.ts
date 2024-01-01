@@ -29,6 +29,7 @@ export interface EventSignup {
     club_id: number;
     athlete_id: number;
     athlete_type: string;
+    lane?: number | null;
   }
 
 export interface EventDetails {
@@ -46,6 +47,7 @@ export interface EventInstances  {
   gender: string;
   clubMaxAthletes? : number;
   display_order?: number;
+  id?: number;
 }
 
   

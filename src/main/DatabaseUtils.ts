@@ -291,3 +291,59 @@ export async function insertClubsAndVenues(DB_PATH) {
         });
     });
 }
+
+
+
+
+
+export async function alterDatabase(DB_PATH: string): Promise<void> {
+    let db = new sqlite3.Database(DB_PATH, (err) => {
+        if (err) {
+            console.error(err.message);
+            throw err;
+        }
+        console.log('Connected to the SQLite database for altering the EventSignUps table.');
+    });
+
+    try {
+        const columnExists = await checkIfColumnExists(db, 'EventSignUps', 'lane');
+        if (!columnExists) {
+            await addLaneColumn(db);
+        }
+    } catch (err) {
+        console.error('Error in altering EventSignUps table:', err);
+    } finally {
+        db.close();
+        console.log('Closed the database connection after checking/altering the EventSignUps table.');
+    }
+}
+
+type TableColumnInfo = {
+    name: string;
+    [key: string]: any; // Include other properties as needed
+  };
+  async function checkIfColumnExists(db: sqlite3.Database, tableName: string, columnName: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      db.all(`PRAGMA table_info(${tableName})`, (err, rows: TableColumnInfo[]) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+  
+        const columnExists = rows.some(row => row.name === columnName);
+        resolve(columnExists);
+      });
+    });
+  }
+async function addLaneColumn(db: sqlite3.Database): Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.run(`ALTER TABLE EventSignUps ADD COLUMN lane INTEGER;`, (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                console.log(`'lane' column added to EventSignUps table.`);
+                resolve();
+            }
+        });
+    });
+}

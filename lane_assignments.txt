@@ -1,0 +1,108 @@
+Event 1 - 2 Lap Hurdles U11 Girl 
+Lane 1: Oswestry
+Lane 2: Shrewsbury
+Lane 3: Wenlock
+Lane 4: Telford
+
+Event 2 - 2 Lap Hurdles U11 Boy 
+Lane 1: Shrewsbury
+Lane 2: Wenlock
+Lane 3: Telford
+Lane 4: Oswestry
+
+Event 3 - 2 Laps U13 Girl 
+Lane 1: Wenlock
+Lane 2: Telford
+Lane 3: Oswestry
+Lane 4: Shrewsbury
+
+Event 4 - 2 Laps U13 Boy 
+Lane 1: Telford
+Lane 2: Oswestry
+Lane 3: Shrewsbury
+Lane 4: Wenlock
+
+Event 5 - 2 Laps U15 Girl 
+Lane 1: Oswestry
+Lane 2: Shrewsbury
+Lane 3: Wenlock
+Lane 4: Telford
+
+Event 6 - 2 Laps U15 Boy 
+Lane 1: Shrewsbury
+Lane 2: Wenlock
+Lane 3: Telford
+Lane 4: Oswestry
+
+Event 7 - 2 Laps U11 Girl 
+Lane 1: Wenlock
+Lane 2: Telford
+Lane 3: Oswestry
+Lane 4: Shrewsbury
+
+Event 8 - 2 Laps U11 Boy 
+Lane 1: Telford
+Lane 2: Oswestry
+Lane 3: Shrewsbury
+Lane 4: Wenlock
+
+Event 9 - 3 Laps U13 Girl 
+Lane 1: Oswestry
+Lane 2: Shrewsbury
+Lane 3: Wenlock
+Lane 4: Telford
+
+Event 10 - 3 Laps U13 Boy 
+Lane 1: Shrewsbury
+Lane 2: Wenlock
+Lane 3: Telford
+Lane 4: Oswestry
+
+Event 11 - 3 Laps U15 Girl 
+Lane 1: Wenlock
+Lane 2: Telford
+Lane 3: Oswestry
+Lane 4: Shrewsbury
+
+Event 12 - 3 Laps U15 Boy 
+Lane 1: Telford
+Lane 2: Oswestry
+Lane 3: Shrewsbury
+Lane 4: Wenlock
+
+Event 13 - 3 Laps U11 Girl 
+Lane 1: Oswestry
+Lane 2: Shrewsbury
+Lane 3: Wenlock
+Lane 4: Telford
+
+Event 14 - 3 Laps U11 Boy 
+Lane 1: Shrewsbury
+Lane 2: Wenlock
+Lane 3: Telford
+Lane 4: Oswestry
+
+Event 15 - 5 Laps U13 Girl 
+Lane 1: Wenlock
+Lane 2: Telford
+Lane 3: Oswestry
+Lane 4: Shrewsbury
+
+Event 16 - 5 Laps U13 Boy 
+Lane 1: Telford
+Lane 2: Oswestry
+Lane 3: Shrewsbury
+Lane 4: Wenlock
+
+Event 17 - 5 Laps U15 Girl 
+Lane 1: Oswestry
+Lane 2: Shrewsbury
+Lane 3: Wenlock
+Lane 4: Telford
+
+Event 18 - 5 Laps U15 Boy 
+Lane 1: Shrewsbury
+Lane 2: Wenlock
+Lane 3: Telford
+Lane 4: Oswestry
+

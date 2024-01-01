@@ -1,6 +1,6 @@
 {
-  "name": "electron-vue-template",
-  "version": "0.1.0",
+  "name": "sportshall-scorer",
+  "version": "0.1.1",
   "description": "A minimal Electron + Vue application",
   "main": "build/main/main.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "build:mac": "node scripts/build.js && electron-builder --mac",
     "build:linux": "node scripts/build.js && electron-builder --linux"
   },
-  "repository": "https://github.com/deluze/electron-vue-template",
+  "repository": "https://github.com/cuthbert1221/sportshall-scorer",
   "author": {
     "name": "Deluze",
     "url": "https://github.com/Deluze"

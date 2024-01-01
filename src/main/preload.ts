@@ -71,12 +71,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('scoreEvent', eventID);
     return result;
   },
+  setLanes: async (eventID) => {
+    const result = await ipcRenderer.invoke('get-and-update-event-signups', eventID);
+    return result;
+  },
   createVenue: async (venue) => {
     const result = await ipcRenderer.invoke('create-venue', venue);
     return result;
   },
   updateVenue: async (venue) => {
     const result = await ipcRenderer.invoke('update-venue', venue);
+    return result;
+  },
+  updateAthlete: async (venue) => {
+    const result = await ipcRenderer.invoke('update-athlete', venue);
+    return result;
+  },
+  updateEventDetail: async (eventDetail) => {
+    const result = await ipcRenderer.invoke('update-eventDetail', eventDetail);
     return result;
   },
   deleteVenue: async (venue) => {
@@ -95,8 +107,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('rankClubTotalVenue', venue);
     return result;
   },
-  getClubPointsVenue: async (venue) => {
-    const result = await ipcRenderer.invoke('getClubPointsVenue', venue);
+  getClubPointsVenue: async (venue, agegroup, gender) => {
+    const result = await ipcRenderer.invoke('getClubPointsVenue', venue, agegroup, gender);
     return result;
   },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),

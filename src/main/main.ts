@@ -4,7 +4,10 @@ import { Athlete, EventDetails, EventSignup, EventInstances } from './interfaces
 import sqlite3 from 'sqlite3';
 import { parse } from 'papaparse';
 import { readFileSync } from 'fs';
-import { createDatabase, insertClubsAndVenues } from './DatabaseUtils.js';
+import { createDatabase, insertClubsAndVenues, alterDatabase } from './DatabaseUtils.js';
+import * as fs from 'fs';
+import { promisify } from 'util';
+const writeFileAsync = promisify(fs.writeFile);
 
 let DB_PATH: string;
 if (process.env.NODE_ENV === 'development') {
@@ -302,7 +305,7 @@ ipcMain.handle('get-event-signups', async (event, eventId) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(
-      `SELECT EventSignUps.id, athlete_type, Athletes.id AS athlete_id, Athletes.fullname AS athlete_name, Clubs.name AS club_name
+      `SELECT EventSignUps.id, athlete_type, Athletes.id AS athlete_id, Athletes.fullname AS athlete_name, Clubs.name AS club_name, lane
        FROM EventSignUps 
        INNER JOIN Athletes ON EventSignUps.athlete_id = Athletes.id
        INNER JOIN Clubs ON Athletes.club = Clubs.id 
@@ -359,11 +362,47 @@ ipcMain.handle('get-events-default-order', async (event, venue) => {
       `SELECT EventInstances.*, EventDetails.*
       FROM EventInstances 
       INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
-      WHERE EventInstances.venue_id = ? 
+      WHERE EventInstances.venue_id = ?
+      
       ORDER BY 
-        CASE WHEN EventDetails.type IN ('Track', 'Paarlouf') THEN 1 WHEN EventDetails.type = 'Field' THEN 2 ELSE 3 END,
-        CASE WHEN EventInstances.agegroup = 'U11' THEN 1 WHEN EventInstances.agegroup = 'U13' THEN 2 WHEN EventInstances.agegroup = 'U15' THEN 3 ELSE 4 END,
-        CASE WHEN EventInstances.gender = 'Girls' THEN 1 WHEN EventInstances.gender = 'Boys' THEN 2 ELSE 3 END`,
+        -- Prioritize Hurdles, Track events by lap count, Paarlouf, Field events, and other Track events
+        CASE 
+          WHEN EventDetails.type = 'Track' AND EventInstances.eventDetail_name LIKE '%Hurdles%' THEN 1
+          WHEN EventDetails.type = 'Track' AND EventInstances.eventDetail_name LIKE '%2 laps%' THEN 2
+          WHEN EventDetails.type = 'Track' AND EventInstances.eventDetail_name LIKE '%3 laps%' THEN 3
+          WHEN EventDetails.type = 'Track' AND EventInstances.eventDetail_name LIKE '%4 laps%' THEN 4
+          WHEN EventDetails.type = 'Track' AND EventInstances.eventDetail_name LIKE '%5 laps%' THEN 5
+          WHEN EventDetails.type = 'Track' AND EventInstances.eventDetail_name LIKE '%6 laps%' THEN 6
+          WHEN EventDetails.type = 'Paarlouf' THEN 7
+          WHEN EventDetails.type = 'Field' THEN 8
+          WHEN EventDetails.type = 'Track' THEN 9
+          ELSE 10 
+        END,
+      
+        -- Age group order changes based on event type
+        CASE 
+          WHEN EventInstances.eventDetail_name LIKE '%Hurdles%' OR EventDetails.type = 'Relay' THEN
+            CASE 
+              WHEN EventInstances.agegroup = 'U11' THEN 1 
+              WHEN EventInstances.agegroup = 'U13' THEN 2 
+              WHEN EventInstances.agegroup = 'U15' THEN 3
+              ELSE 4
+            END
+          ELSE 
+            CASE 
+              WHEN EventInstances.agegroup = 'U13' THEN 1 
+              WHEN EventInstances.agegroup = 'U15' THEN 2 
+              WHEN EventInstances.agegroup = 'U11' THEN 3
+              ELSE 4 
+            END 
+        END,
+      
+        -- Gender order: Girls first, then Boys
+        CASE 
+          WHEN EventInstances.gender = 'Girls' THEN 1 
+          WHEN EventInstances.gender = 'Boys' THEN 2 
+          ELSE 3 
+        END`,
       [venue_id],
       (err, rows) => {
         if (err) {
@@ -565,6 +604,40 @@ ipcMain.handle('update-venue', async (event, { id, name, date }) => {
   return new Promise((resolve, reject) => {
     db.run(
       `UPDATE Venues SET name = ?, date = ? WHERE id = ?`, [name, date, id],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+ipcMain.handle('update-athlete', async (event, { fullname, club, agegroup, gender, id }) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE Athletes SET fullname = ?, club = ?, agegroup = ?, gender = ? WHERE id = ?`, [fullname, club, agegroup, gender, id],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
+ipcMain.handle('update-eventDetail', async (event, { name, type, scoringMethod, number_attempts, maxFractionDigits }) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE EventDetails SET name = ?, type = ?, scoringMethod = ?, number_attempts = ? , maxFractionDigits = ? WHERE name = ?`, [name, type, scoringMethod, number_attempts, maxFractionDigits, name],
       function (err) {
         if (err) {
           reject(err);
@@ -1366,75 +1439,122 @@ async function clubsTotalVenue(venue_id) {
   });
 }
 
-interface ClubTotalPoints {
+type ClubTotalPoints = {
   club: string;
   total_points: number;
-}
-async function getClubsTotalVenue(venue_id): Promise<ClubTotalPoints[]> {
+};
+
+async function getClubsTotalVenue(venue_id: number | string, agegroup: string, gender: string): Promise<ClubTotalPoints[]> {
   const db = await openDatabase();
+  
+  // Convert venue_id to a number if it's not already
+  const numericVenueId = typeof venue_id === 'string' ? parseInt(venue_id, 10) : venue_id;
+
   return new Promise<ClubTotalPoints[]>((resolve, reject) => {
-    db.all(
-      `SELECT Athletes.club, SUM(EventPoints.points) as total_points
-       FROM EventPoints
-       JOIN Athletes ON EventPoints.athlete_id = Athletes.id
-       WHERE EventPoints.venue_id = ?
-       GROUP BY Athletes.club
-       ORDER BY total_points DESC`,
-      [venue_id],
-      (err, rows: ClubTotalPoints[]) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
+    let sql = `
+      SELECT Athletes.club, SUM(EventPoints.points) as total_points
+      FROM EventPoints
+      JOIN Athletes ON EventPoints.athlete_id = Athletes.id
+      JOIN EventInstances ON EventPoints.event_id = EventInstances.id
+      WHERE EventPoints.venue_id = ?
+    `;
+
+    const params: (number | string)[] = [numericVenueId];
+
+    if (agegroup !== 'Mixed') {
+      sql += ` AND EventInstances.agegroup = ?`;
+      params.push(agegroup);
+    }
+    if (gender !== 'Mixed') {
+      sql += ` AND EventInstances.gender = ?`;
+      params.push(gender);
+    }
+
+    sql += `
+      GROUP BY Athletes.club
+      ORDER BY total_points DESC
+    `;
+
+    db.all(sql, params, (err, rows: ClubTotalPoints[]) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
       }
-    );
+    });
   }).finally(() => {
     db.close();
   });
 }
 
-async function getClubRelayTotalVenue(venue_id, club): Promise<any> {
+async function getClubRelayTotalVenue(venue_id: number | string, club: number | string, agegroup: string, gender: string): Promise<any> {
   const db = await openDatabase();
+
+  // Convert venue_id and club to numbers if they are not already
+  const numericVenueId = typeof venue_id === 'string' ? parseInt(venue_id, 10) : venue_id;
+  const numericClubId = typeof club === 'string' ? parseInt(club, 10) : club;
+
+  let sql = `
+    SELECT club_id, SUM(EventRelayPoints.points) as points
+    FROM EventRelayPoints
+    JOIN EventInstances ON EventRelayPoints.event_id = EventInstances.id
+    WHERE EventRelayPoints.venue_id = ? AND EventRelayPoints.club_id = ?
+  `;
+
+  const params: (number | string)[] = [numericVenueId, numericClubId];
+
+  if (agegroup !== 'Mixed') {
+    sql += ` AND EventInstances.agegroup = ?`;
+    params.push(agegroup);
+  }
+  if (gender !== 'Mixed') {
+    sql += ` AND EventInstances.gender = ?`;
+    params.push(gender);
+  }
+
+  sql += ` GROUP BY club_id`;
+
   return new Promise<any>((resolve, reject) => {
-    db.all(
-      `SELECT club_id, SUM(points) as points
-      FROM EventRelayPoints
-      WHERE venue_id = ? AND club_id = ?
-      GROUP BY club_id`,
-      [venue_id, club],
-      (err, rows: any) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows[0]);
-        }
+    db.all(sql, params, (err, rows: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows[0]);
       }
-    );
+    });
   }).finally(() => {
     db.close();
   });
 }
 
 ipcMain.handle('rankClubTotalVenue', async (event, venue_id) => {
-  return await rankClubTotalVenue(venue_id);
+
+  const agegroups = ['U11', 'U13', 'U15', 'Mixed'];
+  const genders = ['Girl', 'Boy', 'Mixed']
+  for (const agegroup of agegroups) {
+    console.log("agegroup: " + agegroup);
+    for (const gender of genders) {
+      await rankClubTotalVenue(venue_id, agegroup, gender);
+    }
+  }
+  return;
 });
 
-async function rankClubTotalVenue(venue_id): Promise<any> {
+async function rankClubTotalVenue(venue_id, agegroup, gender): Promise<any> {
   // Delete all records in the EventPositions table with a specific eventId
-  const clubs: ClubTotalPoints[] = await getClubsTotalVenue(venue_id);
+  const clubs: ClubTotalPoints[] = await getClubsTotalVenue(venue_id, agegroup, gender);
   console.log(venue_id);
   for (let club of clubs) {
     let club_points = club.total_points
-    let relay_club_points = await getClubRelayTotalVenue(venue_id, club.club)
+    let relay_club_points = await getClubRelayTotalVenue(venue_id, club.club, agegroup, gender)
     if(relay_club_points){
       club_points = club.total_points + relay_club_points.points;
     }
-    await createOrUpdateClubTotalVenue({ club: club.club, total_points: club_points, venue_id: venue_id });
+    await createOrUpdateClubTotalVenue({ club: club.club, total_points: club_points, venue_id: venue_id, agegroup: agegroup, gender: gender });
   }
 }
 
-async function createOrUpdateClubTotalVenue({ club, total_points, venue_id }): Promise<void> {
+async function createOrUpdateClubTotalVenue({ club, total_points, venue_id, agegroup, gender}): Promise<void> {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
     db.run(`
@@ -1442,7 +1562,7 @@ async function createOrUpdateClubTotalVenue({ club, total_points, venue_id }): P
       VALUES (?, ?, ?, ?, ?) 
       ON CONFLICT(club_id, venue_id, agegroup, gender) 
       DO UPDATE SET points = excluded.points
-    `, [club, total_points, venue_id, 'Mixed', 'Mixed'], (err) => {
+    `, [club, total_points, venue_id, agegroup, gender], (err) => {
       if (err) {
         reject(err);
       } else {
@@ -1454,18 +1574,18 @@ async function createOrUpdateClubTotalVenue({ club, total_points, venue_id }): P
   });
 }
 
-ipcMain.handle('getClubPointsVenue', async (event, venue_id) => {
-  return await getClubPointsVenue(venue_id);
+ipcMain.handle('getClubPointsVenue', async (event, venue_id, agegroup, gender) => {
+  return await getClubPointsVenue(venue_id, agegroup, gender);
 });
 
-async function getClubPointsVenue(venue_id: number): Promise<any[]> {
+async function getClubPointsVenue(venue_id: number, agegroup, gender): Promise<any[]> {
   const db = await openDatabase();
   return new Promise<any[]>((resolve, reject) => {
     db.all(`SELECT TotalPoints.*, Clubs.name 
     FROM TotalPoints 
     INNER JOIN Clubs ON TotalPoints.club_id = Clubs.id 
     WHERE TotalPoints.venue_id = ? AND TotalPoints.agegroup = ? AND TotalPoints.gender = ? 
-    ORDER BY TotalPoints.points DESC`,  [venue_id, "Mixed", "Mixed"], (err, eventPositions) => {
+    ORDER BY TotalPoints.points DESC`,  [venue_id, agegroup, gender], (err, eventPositions) => {
       if (err) {
         reject(err);
       } else {
@@ -1577,7 +1697,7 @@ async function processRowField(row: any) {
   let type: string;
   let relay: boolean;
   let clubMaxAthletes: number;
-  type = "Track";
+  type = "Field";
   clubMaxAthletes = 2;
   relay = false;
   const venue_id = await getVenueID('Venue 1');
@@ -1728,6 +1848,7 @@ async function loopEventsResults(): Promise<void> {
 setUpDatabase()
 async function setUpDatabase() {
   await createDatabase(DB_PATH);
+  await alterDatabase(DB_PATH);
   await insertClubsAndVenues(DB_PATH)
   // Seeder
   const path = require('path');
@@ -1741,4 +1862,172 @@ async function setUpDatabase() {
     await processFieldEventCSV("fieldFile.csv")
   } 
   await loopEventsResults()
+  generatePrintableLaneAssignmentsToFile('Track', 'lane_assignments.txt', 1)
+
+}
+
+interface Club {
+  id: number;
+  name: string;
+}
+interface EventInstanceRow {
+  display_order: number;
+}
+
+ipcMain.handle('get-and-update-event-signups', async (event, eventId: number) => {
+  const db = await openDatabase();
+
+  try {
+    const displayOrder = await getEventDisplayOrder(db, eventId);
+    const eventSignUps = await getEventSignUps(db, eventId);
+    const clubs = await getAllClubs(db);
+
+    const updatedSignUps = updateLanes(eventSignUps, clubs, displayOrder);
+    await updateEventSignUpLanes(db, updatedSignUps);
+
+    return updatedSignUps;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  } finally {
+    db.close();
+  }
+});
+
+
+
+async function generatePrintableLaneAssignmentsToFile(trackEventType: string, filePath: string, venue): Promise<void> {
+  const db = await openDatabase();
+  const clubs = await getAllClubs(db);
+  let laneAssignmentsText = "";
+
+  const clubIds = clubs.map(club => club.id);
+  const trackEvents = await getTrackEvents(db, trackEventType, venue);
+
+  for (const event of trackEvents) {
+    const displayOrder = event.display_order ?? 0;
+    laneAssignmentsText += `Event ${displayOrder + 1} - ${event.eventDetail_name} ${event.agegroup} ${event.gender} \n`;
+    const rotatedClubIds = rotateArray(clubIds, displayOrder);
+
+    rotatedClubIds.forEach((clubId, index) => {
+      const club = clubs.find(c => c.id === clubId);
+      if (club) {
+        laneAssignmentsText += `Lane ${index + 1}: ${club.name}\n`;
+      }
+    });
+
+    laneAssignmentsText += '\n';
+  }
+
+  await writeFileAsync(filePath, laneAssignmentsText);
+  console.log(`Lane assignments written to ${filePath}`);
+}
+
+
+async function getTrackEvents(db: sqlite3.Database, eventType: string, venue): Promise<EventInstances[]> {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT * FROM EventInstances 
+       INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name 
+       WHERE EventDetails.type = ? AND EventInstances.venue_id = ?
+       ORDER BY EventInstances.display_order`,
+      [eventType, venue],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as EventInstances[]);
+        }
+      }
+    );
+  });
+}
+
+async function getEventDisplayOrder(db: sqlite3.Database, eventId: number): Promise<number | null> {
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT display_order FROM EventInstances WHERE id = ?`,
+      [eventId],
+      (err, row: EventInstanceRow | undefined) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row ? row.display_order : null);
+        }
+      }
+    );
+  });
+}
+async function getEventSignUps(db: sqlite3.Database, eventId: number): Promise<EventSignup[]> {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT * FROM EventSignUps WHERE event_id = ?`,
+      [eventId],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as EventSignup[]);
+        }
+      }
+    );
+  });
+}
+
+async function getAllClubs(db: sqlite3.Database): Promise<Club[]> {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT id, name FROM Clubs`,
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as Club[]);
+        }
+      }
+    );
+  });
+}
+
+function updateLanes(eventSignUps: EventSignup[], clubs: Club[], displayOrder: number | null): EventSignup[] {
+  // Default to no rotation if displayOrder is null
+  const effectiveDisplayOrder = displayOrder ?? 0;
+
+  const rotatedClubs = rotateArray(clubs.map(club => club.id), effectiveDisplayOrder);
+  eventSignUps.forEach(signUp => {
+    const clubIndex = rotatedClubs.indexOf(signUp.club_id);
+    signUp.lane = clubIndex !== -1 ? clubIndex + 1 : null;
+  });
+
+  return eventSignUps;
+}
+
+
+function rotateArray(arr: number[], count: number): number[] {
+  const rotation = count % arr.length;
+  return [...arr.slice(rotation), ...arr.slice(0, rotation)];
+}
+async function updateEventSignUpLanes(db: sqlite3.Database, eventSignUps: EventSignup[]): Promise<void> {
+  for (const signUp of eventSignUps) {
+    // Ensure that lane is either a number or null
+    const lane = signUp.lane !== undefined ? signUp.lane : null;
+    await updateLane(db, signUp.id, lane);
+  }
+}
+
+
+async function updateLane(db: sqlite3.Database, signUpId: number, lane: number | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE EventSignUps SET lane = ? WHERE id = ?`,
+      [lane ?? null, signUpId], // Here, we use the nullish coalescing operator to ensure lane is not undefined
+      (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
 }

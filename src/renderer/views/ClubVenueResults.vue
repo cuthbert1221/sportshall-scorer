@@ -1,28 +1,40 @@
 <template>
-    <div>
-      <DataTable :value="clubs_rank" sortMode="multiple" removableSort>
-        <Column field="club_id" header="CLub ID"></Column>
+  <div class="m-3">
+    <div v-for="(data, key) in clubPointsData" :key="key">
+      <h3 v-if="!key.includes('_Mixed')">{{ key.replace('_', ' ') }}'s</h3>
+      <h3 v-else-if="key.includes('Mixed_')">Overall</h3>
+      <DataTable :value="data" sortMode="multiple" removableSort v-if="!key.includes('_Mixed')|| key.includes('Mixed_')">
+        <Column field="club_id" header="Club ID"></Column>
         <Column field="name" header="Club Name"></Column>
         <Column field="points" header="Total Points"></Column>
-      </DataTable> 
+      </DataTable>
     </div>
-  </template>
+  </div>
+</template>
+
   
-  <script setup lang="ts">
-  import { ref, onMounted } from 'vue';
-  import DataTable from 'primevue/datatable';
-  import Column from 'primevue/column';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
-  const clubs_rank = ref([]);
+const agegroups = ['U11', 'U13', 'U15', 'Mixed'];
+const genders = ['Girl', 'Boy', 'Mixed'];
+const venue = 1;
+const clubPointsData = ref({});
 
-  const fethData = async () => {
-    let athlete_id = 1;
-    let venue = 1;
-    const results = await window.electronAPI.getAthleteScoreVenue(athlete_id, venue);
-    const clubs_tres = await window.electronAPI.rankClubTotalVenue(venue);
-    clubs_rank.value = await window.electronAPI.getClubPointsVenue(venue);
-    console.log(clubs_rank.value);
-    console.log(results);
+const fetchData = async () => {
+  let athlete_id = 1;
+  const results = await window.electronAPI.getAthleteScoreVenue(athlete_id, venue);
+  const clubs_tres = await window.electronAPI.rankClubTotalVenue(venue);
+  for (const agegroup of agegroups) {
+    for (const gender of genders) {
+      const key = `${agegroup}_${gender}`;
+      clubPointsData.value[key] = await window.electronAPI.getClubPointsVenue(venue, agegroup, gender);
+    }
+  }
+  console.log(clubPointsData.value);
 };
-  fethData();
-  </script>
+
+onMounted(fetchData);
+</script>

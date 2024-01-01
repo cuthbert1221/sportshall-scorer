@@ -4,6 +4,7 @@
     <DataTable v-if="event.type != 'Relay' && event.type != 'Paarluf'" :value="athletes" editMode="cell" @cell-edit-complete="onCellEditComplete" showGridlines >
       <Column field="athlete_name" header="Name"></Column>
       <Column field="club_name" header="Club"></Column>
+      <Column field="lane" header="Lane"></Column>
       <Column field="athlete_type" header="Type">
         <template #editor="{ data, field }">
             <InputText v-model="data[field]" />
@@ -21,8 +22,11 @@
         </template>
       </Column>
     </DataTable>
-
+    <br>
     <Button label="Submit Results" @click="rankTeamSheet" />
+    <br>
+    <br>
+    <Button color="red" label="Set Lanes" @click="setLanes" />
   </div>
 </template>
 
@@ -103,6 +107,10 @@ const submitResults = () => {
 const rankTeamSheet = async () => {
   await window.electronAPI.rankSignups(event_id.value);
   await window.electronAPI.scoreEvent(event_id.value);
+};
+
+const setLanes = async () => {
+  await window.electronAPI.setLanes(event_id.value);
 };
 
 const onCellEditComplete = async (event) => {

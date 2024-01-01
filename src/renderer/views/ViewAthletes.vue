@@ -1,6 +1,6 @@
 <template>
     <div class="card">
-      <DataTable v-model:filters="filters" :value="athletes" paginator :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
+      <DataTable v-model:filters="filters" :value="athletes" paginator :rows="10" dataKey="id" filterDisplay="row" :loading="loading" editMode="cell" @cell-edit-complete="onCellEditComplete"
                  :globalFilterFields="['fullname', 'ageGroup', 'gender', 'club']">
         <template #header>
           <div class="flex justify-content-end">
@@ -23,6 +23,11 @@
         <Column field="fullname" header="Fullname" style="min-width: 12rem">
           <template #body="{ data }">
             {{ data.fullname }}
+          </template>
+          <template #editor="{ data, field }">
+            <template v-if="field !== 'price'">
+                <InputText v-model="data[field]" autofocus />
+            </template>
           </template>
           <template #filter="{ filterModel, filterCallback }">
             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by fullname" />
@@ -104,6 +109,32 @@ const ageGroups: string[] = []
 for (var ageGroup of ageGroupsObjects) {
   ageGroups.push(ageGroup.name as string);
 }
+
+
+const onCellEditComplete = async (event) => {
+  let { data, newValue, field } = event;
+
+  switch (field) {
+    case "date":
+      console.log(newValue);
+      let date = new Date(newValue);
+      let formattedDate = date.getFullYear() + '-' + ('0' + (date.getMonth()+1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2);
+      data[field] = formattedDate;
+      console.log(formattedDate);
+      break;
+
+    default:
+      console.log(newValue);
+      data[field] = newValue;
+      console.log(data);
+      break;
+  }
+  // Update row in database
+  const creation = { fullname: data.fullname, club: data.club, agegroup: data.agegroup, gender: data.gender, id: data.id }
+  console.log(creation);
+  await window.electronAPI.updateAthlete(creation);
+};
+
 const loadData = async () => {
   try {
     const result = await window.electronAPI.fetchData('athletes');
