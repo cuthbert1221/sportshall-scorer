@@ -440,6 +440,24 @@ ipcMain.handle('get-event', async (event, eventID) => {
   });
 });
 
+ipcMain.handle('delete-event-signup-individual', async (event, event_id, club_id, athlete_type) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(
+      `DELETE FROM EventSignUps WHERE event_id = ? AND club_id = ? AND athlete_type = ?`,
+      [event_id, club_id, athlete_type],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+});
 ipcMain.handle('delete-event-signups-club', async (event, clubId) => {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {

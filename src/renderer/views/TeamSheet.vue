@@ -13,7 +13,7 @@
               <div v-for="n in event.clubMaxAthletes" :key="n" class="p-fluid">
                 <div class="p-field" v-if="n == 1 || (event.signUps[n - 2] && event.signUps[n - 2].athlete_name) || event.type == 'Relay'">
                   <label for="athlete">Athlete {{ String.fromCharCode(64 + n) }}</label>
-                  <Dropdown id="event"  v-model="event.signUps[n - 1]" :options="filterAthletes(teamId, gender, ageGroup, String.fromCharCode(64 + n))" optionLabel="athlete_name" :filter="true" filterBy="athlete_name" :showClear="true" placeholder="Select an Athlete" aria-describedby="dd-error">
+                  <Dropdown id="event"  v-model="event.signUps[n - 1]" :options="filterAthletes(teamId, gender, ageGroup, String.fromCharCode(64 + n))" optionLabel="athlete_name" :filter="true" filterBy="athlete_name" :showClear="true" placeholder="Select an Athlete" aria-describedby="dd-error" @update:modelValue="onChange(event, String.fromCharCode(64 + n), $event)">
                     <template #option="slotProps">
                         <div class="flex align-items-center">
                             <div >{{slotProps.option.athlete_name}}</div>
@@ -153,15 +153,48 @@ function isAthleteListedTwice(athletes: (Athlete | null)[]): boolean {
 
 const maxAthletes = 2; // Maximum number of athletes per event per club
 
+const onChange = async(eventIndex: any, type: any, athlete: any) => {
+    console.log('Event index:', eventIndex);
+    console.log('New value:', athlete); 
+    var save_error = false;
+    try {
+      const deleted = await window.electronAPI.deleteEventSignupIndividual(eventIndex.id, teamId.value, type);
+      console.log('Result:', deleted);
+    }
+    catch (error) {
+      console.error('Error deleting data:', error);
+    }
+    if(athlete){
+    try {
+          
+          const insert = await window.electronAPI.createEventSignup(eventIndex.id, teamId.value, athlete.athlete_id, athlete.athlete_type, eventIndex.type == 'Relay');
+          console.log('Result:', insert);
+        }
+        catch (error) {
+          save_error = true;
+          console.error('Error inserting data:', error);
+          toast.add({ severity: 'error', summary: 'Error', detail: 'Error message: ' + error, life: 9000 });
+        }
+        if (!save_error){
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Team Sheet saved"', life: 3000 });
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fully save, see above messages', life: 3000 });
+  }
+}
+eventsStore.fetchEvents();
+};
+
 const saveTeamSheet = async () => {
   console.log(events.value);
-  const resultDelete = await window.electronAPI.deleteEventSignupClub(1);
+  const resultDelete = await window.electronAPI.deleteEventSignupClub(teamId.value);
   var save_error = false;
   for (const event of events.value) {
     for (const athleteId of event.signUps) {
       console.log('Athlete ID:', athleteId);
       if (athleteId && athleteId.athlete_id != 0){
         try {
+
           const insert = await window.electronAPI.createEventSignup(event.id, teamId.value, athleteId.athlete_id, athleteId.athlete_type, event.type == 'Relay');
           console.log('Result:', insert);
         }
