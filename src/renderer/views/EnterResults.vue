@@ -18,7 +18,7 @@
     <DataTable v-else :value="clubs" editMode="cell" @cell-edit-complete="onCellEditCompleteRelay" showGridlines >
       <Column field="club_name" header="Name"></Column>
       <Column field="time" header="Time">        <template #editor="{ data, field }">
-            <InputNumber v-model="data[field]" :maxFractionDigits="event.maxFractionDigits" />
+            <InputNumber v-model.number="data[field]" :maxFractionDigits="event.maxFractionDigits" />
         </template>
       </Column>
     </DataTable>
@@ -143,10 +143,10 @@ const onCellEditComplete = async (event) => {
 };
 const onCellEditCompleteRelay = async (event) => {
   let { data, newValue, field } = event;
-  console.log(data);
   switch (field) {
     default:
-      if (newValue && newValue.length > 0) {
+      if (newValue) {
+        console.log(newValue);
         data[field] = newValue;
         let attempts = await window.electronAPI.createEventRelaySignupAttempt(data.club_id, event_id.value, data.time);
       }

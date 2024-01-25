@@ -13,7 +13,7 @@
               <div v-for="n in event.clubMaxAthletes" :key="n" class="p-fluid">
                 <div class="p-field" v-if="n == 1 || (event.signUps[n - 2] && event.signUps[n - 2].athlete_name) || event.type == 'Relay'">
                   <label for="athlete">Athlete {{ String.fromCharCode(64 + n) }}</label>
-                  <Dropdown id="event"  v-model="event.signUps[n - 1]" :options="filterAthletes(teamId, gender, ageGroup, String.fromCharCode(64 + n))" optionLabel="athlete_name" :filter="true" filterBy="athlete_name" :showClear="true" placeholder="Select an Athlete" aria-describedby="dd-error" @update:modelValue="onChange(event, String.fromCharCode(64 + n), $event)">
+                  <Dropdown id="event"  v-model="event.signUps[n - 1]" :options="filterAthletes(teamId, gender, ageGroup, String.fromCharCode(64 + n))" optionLabel="athlete_name" :filter="true" filterBy="athlete_name" :showClear="true" placeholder="Select an Athlete" aria-describedby="dd-error" @update:modelValue="onChange(event, String.fromCharCode(64 + n), event.clubMaxAthletes, $event)">
                     <template #option="slotProps">
                         <div class="flex align-items-center">
                             <div >{{slotProps.option.athlete_name}}</div>
@@ -153,7 +153,7 @@ function isAthleteListedTwice(athletes: (Athlete | null)[]): boolean {
 
 const maxAthletes = 2; // Maximum number of athletes per event per club
 
-const onChange = async(eventIndex: any, type: any, athlete: any) => {
+const onChange = async(eventIndex: any, type: any, maxAthletes: any, athlete: any) => {
     console.log('Event index:', eventIndex);
     console.log('New value:', athlete); 
     var save_error = false;
@@ -166,8 +166,11 @@ const onChange = async(eventIndex: any, type: any, athlete: any) => {
     }
     if(athlete){
     try {
-          
-          const insert = await window.electronAPI.createEventSignup(eventIndex.id, teamId.value, athlete.athlete_id, athlete.athlete_type, eventIndex.type == 'Relay');
+          var athlete_check = false
+          if (eventIndex.type == 'Relay' || maxAthletes > 2){
+            athlete_check = true;
+          }
+          const insert = await window.electronAPI.createEventSignup(eventIndex.id, teamId.value, athlete.athlete_id, athlete.athlete_type, athlete_check);
           console.log('Result:', insert);
         }
         catch (error) {
