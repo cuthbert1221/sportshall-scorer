@@ -15,6 +15,7 @@ import Venues from '../views/Venues.vue';
 import ViewResults from '../views/ViewResults.vue';
 import AthleteVenueResults from '../views/AthleteVenueResults.vue';
 import ClubVenueResults from '../views/ClubVenueResults.vue';
+import ClubOverallResults from '../views/ClubOverallResults.vue';
 import ViewEventTypes from '../views/ViewEventTypes.vue';
 
 const routes = [
@@ -97,6 +98,11 @@ const routes = [
     path: '/club-venue-results',
     name: 'ClubVenueResults',
     component: ClubVenueResults
+  },
+  {
+    path: '/club-pverall-results',
+    name: 'ClubOverallResults',
+    component: ClubOverallResults
   },
   {
     path: '/view-event-types',

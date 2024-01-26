@@ -119,6 +119,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('getClubPointsVenue', venue, agegroup, gender);
     return result;
   },
+  getClubPointsOverall: async (agegroup, gender) => {
+    const result = await ipcRenderer.invoke('getClubPointsOverall', agegroup, gender);
+    return result;
+  },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),
   fetchData: (type) => ipcRenderer.invoke('fetch-data', type)
 })

@@ -1640,6 +1640,47 @@ async function getClubPointsVenue(venue_id: number, agegroup, gender): Promise<a
   });
 }
 
+ipcMain.handle('getClubPointsOverall', async (event, agegroup, gender) => {
+  return await getClubPointsOverall(agegroup, gender);
+});
+
+async function getClubPointsOverall(agegroup, gender): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`WITH ClubCount AS (
+      SELECT venue_id, COUNT(DISTINCT club_id) as total_clubs
+      FROM TotalPoints
+      GROUP BY venue_id
+  ),
+  RankedPoints AS (
+      SELECT 
+          TotalPoints.club_id,
+          TotalPoints.venue_id,
+          RANK() OVER (PARTITION BY TotalPoints.venue_id ORDER BY TotalPoints.points DESC) as rank,
+          ClubCount.total_clubs
+      FROM TotalPoints
+      INNER JOIN ClubCount ON TotalPoints.venue_id = ClubCount.venue_id
+      WHERE TotalPoints.agegroup = ? AND TotalPoints.gender = ?
+  )
+  SELECT 
+      Clubs.name, 
+      SUM(total_clubs - rank + 1) as TotalDynamicPoints
+  FROM RankedPoints
+  INNER JOIN Clubs ON RankedPoints.club_id = Clubs.id
+  GROUP BY Clubs.name
+  ORDER BY TotalDynamicPoints DESC;
+  `,  [agegroup, gender], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
 
 let countings = 0;
 async function processTrackEventCSV(filePath: string) {
