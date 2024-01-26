@@ -57,7 +57,7 @@ const fetchEventDetails = async () => {
     const signup = signups[i];
     let attempts = await window.electronAPI.getEventSignupAttempt(signup.athlete_id, event_id.value);
     // Create an array of maxAttempts.value length and increment attempt_number by 1 for each element
-    let attemptsArray = Array.from({ length: maxAttempts.value }, (_, i) => ({ result: NaN, attempt_number: i + 1 }));
+    let attemptsArray = Array.from({ length: maxAttempts.value }, (_, i) => ({ result: "", attempt_number: i + 1 }));
     if (attempts) {
       console.log('attempts exist');
       // Replace the entries in attemptsArray for which attempts exist
@@ -132,7 +132,7 @@ const onCellEditComplete = async (event) => {
       if (field.startsWith('attempts')) {
         console.log(data.id, field.split('.')[1], newValue);
         let attempt_number = field.split('.')[1];
-        if (!isNaN(data.attempts[attempt_number].result) && data.attempts[attempt_number].result.length != "" && data.attempts[attempt_number].result != null) {
+        if (!isNaN(data.attempts[attempt_number].result) && data.attempts[attempt_number].result.length != "" && data.attempts[attempt_number].result != null && data.attempts[attempt_number].result != undefined && data.attempts[attempt_number].result != 0) {
           console.log('is number');
           let attempts = await window.electronAPI.createEventSignupAttempt(data.athlete_id, event_id.value, parseInt(attempt_number) + 1, data.attempts[attempt_number].result);
         } else {
