@@ -328,6 +328,35 @@ ipcMain.handle('get-events', async (event, venue) => {
   return await getEvents(venue);
 });
 
+ipcMain.handle('getSignupPosition', async (event, event_id, athlete_id) => {
+  const position = await getSignupPosition(event_id, athlete_id);
+  if (position.length > 0) {
+    return position[0].position;
+  } else {
+    return "N/A"
+  }
+  
+});
+async function getSignupPosition(event_id, athlete_id): Promise<any> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT position FROM EventPositions WHERE event_id = ? AND athlete_id = ? Limit 1`,
+      [event_id, athlete_id],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
+
+
 async function getEvents(venue: string, venue_id?: number): Promise<any> {
   if (!venue_id) {
     venue_id = await getVenueID(venue);
@@ -1542,7 +1571,7 @@ async function getClubRelayTotalVenue(venue_id: number | string, club: number | 
 }
 
 ipcMain.handle('rankClubTotalVenue', async (event, venue_id) => {
-
+  await loopEventsResults();
   const agegroups = ['U11', 'U13', 'U15', 'Mixed'];
   const genders = ['Girl', 'Boy', 'Mixed']
   for (const agegroup of agegroups) {
@@ -1859,6 +1888,8 @@ async function loopEventsResults(): Promise<void> {
   }
 
 }
+
+
 setUpDatabase()
 async function setUpDatabase() {
   await createDatabase(DB_PATH);

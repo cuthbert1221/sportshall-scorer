@@ -107,6 +107,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('get-athlete-total-score-venue', athlete_id, venue);
     return result;
   },
+  getSignupPosition: async (event_id, athlete_id) => {
+    const result = await ipcRenderer.invoke('getSignupPosition', event_id, athlete_id);
+    return result;
+  },
   rankClubTotalVenue: async (venue) => {
     const result = await ipcRenderer.invoke('rankClubTotalVenue', venue);
     return result;

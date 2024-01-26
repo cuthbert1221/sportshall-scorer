@@ -14,6 +14,7 @@
             <InputNumber v-model.number="data.attempts[n-1].result" :maxFractionDigits="event.maxFractionDigits"/>
         </template>
       </Column>
+      <Column field="position" header="Position"></Column>
     </DataTable>
     <DataTable v-else :value="clubs" editMode="cell" @cell-edit-complete="onCellEditCompleteRelay" showGridlines >
       <Column field="club_name" header="Name"></Column>
@@ -68,10 +69,15 @@ const fetchEventDetails = async () => {
       }
     }
     signup.attempts = attemptsArray;
+
+    // Set the position of the signup
+    signup.position = await window.electronAPI.getSignupPosition(event_id.value, signup.athlete_id)
+
     signups[i] = signup;
   }
   console.log(signups);
   athletes.value = signups;
+
 } else {
   clubs.value = (await window.electronAPI.getRelayClubs(event_id.value)).map(club => {
     if (!isNaN(club.time)) {
@@ -107,6 +113,7 @@ const submitResults = () => {
 const rankTeamSheet = async () => {
   await window.electronAPI.rankSignups(event_id.value);
   await window.electronAPI.scoreEvent(event_id.value);
+  fetchEventDetails();
 };
 
 const setLanes = async () => {

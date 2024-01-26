@@ -3,7 +3,8 @@ import { defineStore } from 'pinia';
 export const useEventsStore = defineStore('eventsStore', {
   state: () => ({
     events: [] as EventSource[],
-    venue_name: 'Venue 2' as string
+    venue_name: 'Venue 2' as string,
+    venue_id: 2 as number
   }),
   actions: {
     async fetchEvents() {
@@ -28,6 +29,9 @@ export const useEventsStore = defineStore('eventsStore', {
     }, 
     setVenueName(venue_name: string) {
       this.venue_name = venue_name;
+    },
+    setVenueId(venue_id: number) {
+      this.venue_id = venue_id;
     }
   }
 });

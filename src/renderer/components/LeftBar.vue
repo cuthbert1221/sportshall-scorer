@@ -230,11 +230,13 @@ const selectedVenue = ref([]);
 
 async function setVenue(venue_name: string) {
   console.log(venue_name.name);
+  console.log(venue_name.id);
   eventsStore.setVenueName(venue_name.name)
+  eventsStore.setVenueId(venue_name.id)
 }
 onMounted(async () => {
   const result = await window.electronAPI.fetchData('venues');
-  venues.value = result.map((venue: any) => ({ name: venue.name }));
+  venues.value = result.map((venue: any) => ({ name: venue.name, id: venue.id}));
 });
 </script>
 <style>
