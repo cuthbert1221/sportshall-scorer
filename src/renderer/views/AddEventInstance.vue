@@ -120,6 +120,12 @@ async function onSubmit() {
   event.gender = event.gender.name; // Use the gender name as a string
   event.eventDetail_name = event.eventDetail_name.name; // Use the event name as a string
   event.venue_name = event.venue_name.name; // Use the venue name as a string
+  event.clubMaxAthletes = 2;
+  if (event.eventDetail_name.includes("Relay")) {
+    event.clubMaxAthletes = 4;
+  } else if (!event.eventDetail_name.includes("Lap") && !event.eventDetail_name.includes("Paarluf") && event.agegroup == "U11"){
+    event.clubMaxAthletes = 3;
+  }
   const creation = await window.electronAPI.createEventInstance(event);
 
   if (typeof creation === "number") {

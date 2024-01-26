@@ -112,7 +112,7 @@ ipcMain.handle('create-event-instance', async (event, form: any) => {
   //lookup venue id
   const venue_id = await getVenueID(form.venue_name);
   console.log(venue_id);
-  const result = await addEventInstance({ eventDetail_name: form.eventDetail_name, venue_id: venue_id, agegroup: form.agegroup, gender: form.gender });
+  const result = await addEventInstance({ eventDetail_name: form.eventDetail_name, venue_id: venue_id, agegroup: form.agegroup, gender: form.gender, clubMaxAthletes: form.clubMaxAthletes});
   console.log("The result was: " + result);
   return result
 });
@@ -130,9 +130,9 @@ async function addEventInstance(eventInstance: EventInstances): Promise<number |
 }
 
 async function insertEventInstance(db: sqlite3.Database, eventInstance: EventInstances): Promise<number> {
-  const sql = `INSERT INTO EventInstances (eventDetail_name, venue_id, agegroup, gender) VALUES (?, ?, ?, ?)`;
+  const sql = `INSERT INTO EventInstances (eventDetail_name, venue_id, agegroup, gender, clubMaxAthletes) VALUES (?, ?, ?, ?, ?)`;
   return new Promise((resolve, reject) => {
-    db.run(sql, [eventInstance.eventDetail_name, eventInstance.venue_id, eventInstance.agegroup, eventInstance.gender], function(err) {
+    db.run(sql, [eventInstance.eventDetail_name, eventInstance.venue_id, eventInstance.agegroup, eventInstance.gender, eventInstance.clubMaxAthletes], function(err) {
       if (err) {
         console.error(err.message);
         reject(err.message);
@@ -718,7 +718,6 @@ async function rankSignups(eventId: number): Promise<any> {
   await deleteEventPosition(eventId);
   await deleteEventRelayPosition(eventId);
   const event_details = await getEventDetails(eventId);
-  console.log(event_details);
   const scoring_method = event_details.scoringMethod;
   // Define a helper function to handle the ranking process
   const handleRanking = async (signups: any[], scoring_athlete: string, eventId: number) => {
@@ -744,15 +743,15 @@ async function rankSignups(eventId: number): Promise<any> {
     
     const rankedAthletes = rankEventAttempts(signupScores, scoring_method === "highest"); // Assuming higher scores are better
     console.log(rankedAthletes);
-
     const clubAthleteCount = {};
     for (const athlete of rankedAthletes) {
       let modifier = 0;
-      console.log(athlete);
       const { athlete_id } = await getEventSignupUserID(athlete.signupId);
-      const { athlete_club } = await getEventSignupUserClub(athlete.signupId);
+      const athlete_club_raw = await getEventSignupUserClub(athlete.signupId);
+      const athlete_club = athlete_club_raw.club_id
       console.log("athlete_id: " + athlete_id);
-      console.log(athlete.scores.length)
+      console.log("athlete_club: " + athlete_club);
+      console.log("signupId: " + athlete.signupId);
 
       if (!clubAthleteCount[athlete_club]) {
         clubAthleteCount[athlete_club] = 1;
@@ -770,15 +769,13 @@ async function rankSignups(eventId: number): Promise<any> {
   };
 
   // Fetch all signups for the event and handle the ranking process
-  console.log("scoring_type: " + event_details.type);
   if (event_details.type == "Track") {
-    console.log("scoring_type: " + event_details.type);
     const signupsA = await getEventSignupTrack(eventId, "A");
+    console.log(signupsA);
     await handleRanking(signupsA, "A", eventId);
     const signupsB = await getEventSignupTrack(eventId, "B");
     await handleRanking(signupsB, "B", eventId);
   } else if (event_details.type == "Relay" || event_details.type == "Paarluf") {
-    console.log("scoring_type: " + event_details.type);
     const signups = await getRelaySignupsResults(eventId, 4);
     let i =1;
     for (const club of signups) {
@@ -788,7 +785,6 @@ async function rankSignups(eventId: number): Promise<any> {
 
   }
   else {
-    console.log("scoring_type: " + event_details.type);
     const signups = await getEventSignup(eventId);
     await handleRanking(signups, "N/A", eventId);
   }
