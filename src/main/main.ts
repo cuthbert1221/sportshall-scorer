@@ -256,7 +256,34 @@ ipcMain.handle('fetch-data', async (event, type) => {
   const db = new sqlite3.Database(DB_PATH);
   let query = '';
   if (type === 'athletes') {
-    query = "SELECT Athletes.*, Clubs.name AS club_name FROM Athletes INNER JOIN Clubs ON Athletes.club = Clubs.id";
+    query = `
+    SELECT 
+    Athletes.*, 
+    Clubs.name AS club_name, 
+    TotalAthletePoints.points,
+    EventSignUpCount.entry_count,
+    CASE 
+        WHEN EventSignUpCount.entry_count > 0 THEN TotalAthletePoints.points / EventSignUpCount.entry_count
+        ELSE 0
+    END AS points_per_signup
+FROM Athletes 
+INNER JOIN Clubs ON Athletes.club = Clubs.id 
+LEFT JOIN (
+    SELECT 
+        athlete_id, 
+        SUM(points) as points 
+    FROM TotalAthletePoints 
+    GROUP BY athlete_id
+) AS TotalAthletePoints ON Athletes.id = TotalAthletePoints.athlete_id
+LEFT JOIN (
+    SELECT 
+        athlete_id, 
+        COUNT(*) as entry_count
+    FROM eventSignUps 
+    GROUP BY athlete_id
+) AS EventSignUpCount ON Athletes.id = EventSignUpCount.athlete_id
+
+    `;
   } else if (type === 'eventDetails') {
     query = "SELECT * FROM EventDetails";
   } else if (type === 'eventInstances') {
@@ -627,6 +654,24 @@ ipcMain.handle('delete-event-attempt', async (event, athlete_id, event_id, attem
   });
 });
 
+ipcMain.handle('delete-event-relay-attempt', async (event, club_id, event_id) => {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+      db.run(
+        `DELETE FROM EventRelayAttempts WHERE club_id = ? AND event_id = ?`, [club_id, event_id],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.lastID);
+          }
+        }
+      );
+  }).finally(() => {
+    db.close();
+  });
+});
+
 
 ipcMain.handle('create-venue', async (event, { name, date }) => {
   const db = await openDatabase();
@@ -805,7 +850,11 @@ async function rankSignups(eventId: number): Promise<any> {
     const signupsB = await getEventSignupTrack(eventId, "B");
     await handleRanking(signupsB, "B", eventId);
   } else if (event_details.type == "Relay" || event_details.type == "Paarluf") {
-    const signups = await getRelaySignupsResults(eventId, 4);
+    var countRelay = 4;
+    if (event_details.type == "Paarluf") {
+      countRelay = 2;
+    }
+    const signups = await getRelaySignupsResults(eventId, countRelay);
     let i =1;
     for (const club of signups) {
       await createEventRelayPosition({ eventId, club_id: club.club_id, position: i, scoring_type: event_details.type });
@@ -1423,9 +1472,12 @@ ipcMain.handle('scoreEvent', async (ipcEvent, eventId: number) => {
 ipcMain.handle('get-relay-signup', async (ipcEvent, eventId: number) => {
   const event_details = await getEventDetails(eventId);
   let clubs = [];
+  console.log(event_details);
   if (event_details.type == "Paarluf") {
+      console.log("Paarluf");
       clubs = await getRelaySignups(eventId, 2);
   } else {
+      console.log("Relay"); 
       clubs = await getRelaySignups(eventId, 4);
   }
 
@@ -1580,6 +1632,7 @@ ipcMain.handle('rankClubTotalVenue', async (event, venue_id) => {
       await rankClubTotalVenue(venue_id, agegroup, gender);
     }
   }
+  await rankAthleteTotalVenue(venue_id);
   return;
 });
 
@@ -1597,6 +1650,7 @@ async function rankClubTotalVenue(venue_id, agegroup, gender): Promise<any> {
   }
 }
 
+
 async function createOrUpdateClubTotalVenue({ club, total_points, venue_id, agegroup, gender}): Promise<void> {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
@@ -1610,6 +1664,49 @@ async function createOrUpdateClubTotalVenue({ club, total_points, venue_id, ageg
         reject(err);
       } else {
         resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+async function rankAthleteTotalVenue(venue_id): Promise<any> {
+  // Delete all records in the EventPositions table with a specific eventId
+  const athletes = await getAthletes();
+  for (const athlete of athletes) {
+    var total_points = await athleteTotalVenueScore(athlete.id, venue_id);
+    createOrUpdateAthleteTotalVenue({athlete_id: athlete.id, total_points: total_points, venue_id: venue_id});
+  }
+}
+
+async function createOrUpdateAthleteTotalVenue({ athlete_id, total_points, venue_id}): Promise<void> {
+  const db = await openDatabase();
+  return new Promise<void>((resolve, reject) => {
+    db.run(`
+      INSERT INTO TotalAthletePoints (athlete_id, points, venue_id) 
+      VALUES (?, ?, ?) 
+      ON CONFLICT(athlete_id, venue_id) 
+      DO UPDATE SET points = excluded.points
+    `, [athlete_id, total_points, venue_id], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getAthletes(): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`SELECT * from athletes`,  [], (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
       }
     });
   }).finally(() => {
@@ -1639,6 +1736,7 @@ async function getClubPointsVenue(venue_id: number, agegroup, gender): Promise<a
     db.close();
   });
 }
+
 
 ipcMain.handle('getClubPointsOverall', async (event, agegroup, gender) => {
   return await getClubPointsOverall(agegroup, gender);

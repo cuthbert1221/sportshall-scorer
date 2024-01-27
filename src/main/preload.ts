@@ -31,6 +31,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('delete-event-attempt', athlete_id, event_id, attemptNumber);
     return result;
   },
+  deleteEventRelaySignupAttempt: async (club_id, event_id) => {
+    const result = await ipcRenderer.invoke('delete-event-relay-attempt', club_id, event_id);
+    return result;
+  },
   deleteEventSignupClub: async (club: number) => {
     const result = await ipcRenderer.invoke('delete-event-signups-club', club);
     return result;

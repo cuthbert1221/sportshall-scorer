@@ -114,7 +114,7 @@ const types = [
   { name: "Track", code: "T" },
   { name: "Field", code: "F" },
   { name: "Relay", code: "R" },
-  { name: "Paarluf ", code: "P" },
+  { name: "Paarluf", code: "P" },
 ];
 
 const scoringMethods = [

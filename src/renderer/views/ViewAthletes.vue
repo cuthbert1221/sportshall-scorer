@@ -1,7 +1,7 @@
 <template>
     <div class="card">
       <DataTable v-model:filters="filters" :value="athletes" paginator :rows="10" dataKey="id" filterDisplay="row" :loading="loading" editMode="cell" @cell-edit-complete="onCellEditComplete"
-                 :globalFilterFields="['fullname', 'ageGroup', 'gender', 'club']">
+                 :globalFilterFields="['fullname', 'ageGroup', 'gender', 'club']" sortMode="multiple">
         <template #header>
           <div class="flex justify-content-end">
             <span class="p-input-icon-left">
@@ -12,7 +12,7 @@
         </template>
         <template #empty> No athletes found. </template>
         <template #loading> Loading athletes data. Please wait. </template>
-        <Column field="id" header="ID" style="min-width: 12rem">
+        <Column field="id" header="ID" style="min-width: 12rem" sortable>
           <template #body="{ data }">
             {{ data.id }}
           </template>
@@ -20,7 +20,7 @@
             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by ID" />
           </template>
         </Column>
-        <Column field="fullname" header="Fullname" style="min-width: 12rem">
+        <Column field="fullname" header="Fullname" style="min-width: 12rem" sortable>
           <template #body="{ data }">
             {{ data.fullname }}
           </template>
@@ -33,7 +33,7 @@
             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by fullname" />
           </template>
         </Column>
-        <Column field="agegroup" header="Age Group" style="min-width: 12rem">
+        <Column field="agegroup" header="Age Group" style="min-width: 12rem" sortable>
           <template #body="{ data }">
             {{ data.agegroup }}
           </template>
@@ -47,7 +47,7 @@
                 </Dropdown>       
               </template>
         </Column>
-        <Column field="gender" header="Gender" style="min-width: 12rem">
+        <Column field="gender" header="Gender" style="min-width: 12rem" sortable>
           <template #body="{ data }">
             {{ data.gender }}
           </template>
@@ -61,7 +61,7 @@
                 </Dropdown>         
                </template>
         </Column>
-        <Column field="club_name" header="Club" style="min-width: 12rem">
+        <Column field="club_name" header="Club" style="min-width: 12rem" sortable>
           <template #body="{ data }">
             {{ data.club_name }}
           </template>
@@ -75,7 +75,32 @@
                 </Dropdown>
           </template>
         </Column>
+        <Column field="points" header="Points" style="min-width: 12rem" v-if="showPoints" sortable>
+          <template #body="{ data }">
+            {{ data.points }}
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by Points" />
+          </template>
+        </Column>
+        <Column field="entry_count" header="Entry Count" style="min-width: 12rem" v-if="showPoints" sortable>
+          <template #body="{ data }">
+            {{ data.entry_count }}
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by Entry Count" />
+          </template>
+        </Column>
+        <Column field="points_per_signup" header="Points Per Signup" style="min-width: 12rem" v-if="showPoints" sortable>
+          <template #body="{ data }">
+            {{ data.points_per_signup }}
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Points Per Signup" />
+          </template>
+        </Column>
       </DataTable>
+      <div class="text-center"><Button label="Show Athlete Points" @click="toggleShowPoints"/></div>
     </div>
   </template>
 
@@ -89,11 +114,15 @@ import { useGenericStore } from '../stores/genericStore';
 const genericStore = useGenericStore()
 
 const athletes = ref();
+const showPoints = ref(false);
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   fullname: { value: null, matchMode: FilterMatchMode.CONTAINS },
   agegroup: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   id: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  points: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  entry_count: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  points_per_signup: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   gender: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   club_name: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
 });
@@ -110,7 +139,9 @@ for (var ageGroup of ageGroupsObjects) {
   ageGroups.push(ageGroup.name as string);
 }
 
-
+function toggleShowPoints() {
+  showPoints.value = !showPoints.value;
+    }
 const onCellEditComplete = async (event) => {
   let { data, newValue, field } = event;
 

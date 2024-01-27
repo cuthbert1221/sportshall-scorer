@@ -152,11 +152,17 @@ const onCellEditCompleteRelay = async (event) => {
   let { data, newValue, field } = event;
   switch (field) {
     default:
-      if (newValue) {
+      if (newValue && newValue > 0) {
+        
         console.log(newValue);
         data[field] = newValue;
         let attempts = await window.electronAPI.createEventRelaySignupAttempt(data.club_id, event_id.value, data.time);
-      }
+      } else {
+          console.log('not number');
+          // Should delete the attempt...
+          let attempts = await window.electronAPI.deleteEventRelaySignupAttempt(data.club_id, event_id.value);
+          data[field] = 0;
+        } 
       break;
   }
 

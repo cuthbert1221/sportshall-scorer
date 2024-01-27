@@ -39,7 +39,11 @@ const fetchData = async () => {
   let athlete_id = 1;
   loading.value = true;
   const results = await window.electronAPI.getAthleteScoreVenue(athlete_id, eventsStore.venue_id);
-  const clubs_tres = await window.electronAPI.rankClubTotalVenue(eventsStore.venue_id);
+  for (let loop = 1; loop <= 4; loop++) {
+    //const clubs_tres = await window.electronAPI.rankClubTotalVenue(eventsStore.venue_id);
+    const clubs_tres = await window.electronAPI.rankClubTotalVenue(loop);
+  }
+
   loading.value = false;
   for (const agegroup of agegroups) {
     for (const gender of genders) {
