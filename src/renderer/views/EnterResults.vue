@@ -24,7 +24,7 @@
       </Column>
     </DataTable>
     <br>
-    <Button label="Submit Results" @click="rankTeamSheet" />
+    <!---<Button label="Submit Results" @click="rankTeamSheet" />-->
     <br>
     <br>
     <Button color="red" label="Set Lanes" @click="setLanes" />
