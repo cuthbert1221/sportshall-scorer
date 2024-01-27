@@ -1,6 +1,6 @@
 {
   "name": "sportshall-scorer",
-  "version": "0.1.6",
+  "version": "1.0.0",
   "description": "A minimal Electron + Vue application",
   "main": "build/main/main.js",
   "scripts": {
@@ -31,11 +31,13 @@
   "dependencies": {
     "@vuelidate/core": "^2.0.3",
     "@vuelidate/validators": "^2.0.4",
+    "ejs": "^3.1.9",
     "papaparse": "^5.4.1",
     "pinia": "^2.1.7",
     "primeflex": "^3.3.1",
     "primeicons": "^6.0.1",
     "primevue": "^3.42.0",
+    "puppeteer": "^21.9.0",
     "sqlite3": "^5.1.6",
     "vee-validate": "^4.12.2",
     "vue": "^3.2.47",

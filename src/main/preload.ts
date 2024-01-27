@@ -127,6 +127,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const result = await ipcRenderer.invoke('getClubPointsOverall', agegroup, gender);
     return result;
   },
+  setPDFs: async (venue) => {
+    const result = await ipcRenderer.invoke('setPDFs', venue);
+    return result;
+  },
   readDataFromDb: (query: string) => ipcRenderer.invoke('read-data', query),
   fetchData: (type) => ipcRenderer.invoke('fetch-data', type)
 })

@@ -201,6 +201,16 @@
             </a>
           </li>
           <li>
+            <router-link
+                  :to="{ name: 'CreatePDFs' }"
+                  v-ripple
+                  class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"
+                >
+                  <i class="pi pi-plus mr-2"></i>
+                  <span class="font-medium">PDFs</span>
+                </router-link>
+          </li>
+          <li>
             <a
               v-ripple
               class="flex align-items-center cursor-pointer p-3 hover:bg-bluegray-900 border-round text-bluegray-100 hover:text-bluegray-50 transition-duration-150 transition-colors p-ripple"

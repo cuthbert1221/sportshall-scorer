@@ -8,6 +8,9 @@ import { createDatabase, insertClubsAndVenues, alterDatabase } from './DatabaseU
 import * as fs from 'fs';
 import { promisify } from 'util';
 const writeFileAsync = promisify(fs.writeFile);
+const ejs = require('ejs');
+const puppeteer = require('puppeteer');
+
 
 let DB_PATH: string;
 if (process.env.NODE_ENV === 'development') {
@@ -1718,6 +1721,11 @@ ipcMain.handle('getClubPointsVenue', async (event, venue_id, agegroup, gender) =
   return await getClubPointsVenue(venue_id, agegroup, gender);
 });
 
+ipcMain.handle('setPDFs', async (event, venue_id) => {
+  console.log("setPDFs");
+  return await createPDF(venue_id);
+});
+
 async function getClubPointsVenue(venue_id: number, agegroup, gender): Promise<any[]> {
   const db = await openDatabase();
   return new Promise<any[]>((resolve, reject) => {
@@ -2047,6 +2055,8 @@ async function setUpDatabase() {
   } 
   await loopEventsResults()
   generatePrintableLaneAssignmentsToFile('Track', 'lane_assignments.txt', 1)
+  //console.log("createPDF");
+  //createPDF();
 
 }
 
@@ -2214,4 +2224,198 @@ async function updateLane(db: sqlite3.Database, signUpId: number, lane: number |
       }
     );
   });
+}
+
+async function getAllEventsAgeGroupVenue(venue_id: number, agegroup, gender): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`SELECT 
+    EventInstances.*,
+    EventDetails.type
+	FROM 
+    EventInstances
+INNER JOIN EventDetails ON EventInstances.eventDetail_name = EventDetails.name
+WHERE 
+    EventInstances.venue_id = ? AND 
+    EventInstances.agegroup = ? AND 
+    EventInstances.gender = ?
+ORDER BY 
+    EventInstances.display_order`,  [venue_id, agegroup, gender], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getATrackAtheltesReuslts(event_id: number, scoring): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`SELECT 
+    EP.athlete_id, 
+    A.fullname,
+    position,
+    MAX(EA.result) as highest_attempt
+FROM 
+    EventPositions EP
+INNER JOIN Athletes A ON EP.athlete_id = A.id
+LEFT JOIN EventAttempts EA ON EP.athlete_id = EA.athlete_id AND EP.event_id = EA.event_id
+WHERE 
+    EP.event_id = ? AND 
+    EP.scoring_type = ?
+GROUP BY 
+    EP.athlete_id, 
+    A.fullname
+ORDER BY 
+    EP.position
+`,  [event_id, scoring], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getFieldAtheltesReuslts(event_id: number): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`SELECT 
+    EP.athlete_id, 
+    A.fullname,
+    position,
+    MAX(EA.result) as highest_attempt
+FROM 
+    EventPositions EP
+INNER JOIN Athletes A ON EP.athlete_id = A.id
+LEFT JOIN EventAttempts EA ON EP.athlete_id = EA.athlete_id AND EP.event_id = EA.event_id
+WHERE 
+    EP.event_id = ? 
+    GROUP BY 
+    EP.athlete_id, 
+    A.fullname
+ORDER BY 
+    EP.position
+`,  [event_id], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+async function getRelayAtheltesReuslts(event_id: number): Promise<any[]> {
+  const db = await openDatabase();
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(`SELECT 
+    EP.club_id, 
+    C.name as fullname,
+    position,
+    MAX(EA.result) as highest_attempt
+FROM 
+    EventRelayPositions EP
+INNER JOIN Clubs C ON EP.club_id = C.id
+LEFT JOIN EventRelayAttempts EA ON EP.club_id = EA.club_id AND EP.event_id = EA.event_id
+WHERE 
+    EP.event_id = ? 
+    GROUP BY 
+    EP.club_id, 
+    C.name
+ORDER BY 
+    EP.position
+`,  [event_id], (err, eventPositions) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventPositions);
+      }
+    });
+  }).finally(() => {
+    db.close();
+  });
+}
+
+
+interface EventResult {
+  name: string;
+  type: string;
+  results: any[]; // Consider defining a more specific type instead of any
+}
+
+async function createPDF(venue: number) {
+    const path = require('path');
+    const agegroups = ['U11', 'U13', 'U15'];
+    const genders = ['Girl', 'Boy']
+
+    //change
+
+    for (const agegroup of agegroups) {
+      console.log("agegroup: " + agegroup);
+      for (const gender of genders) {
+        const events: EventResult[] = [];
+        const allEvents = await getAllEventsAgeGroupVenue(venue, agegroup, gender);
+        // Fetch data from the database
+        for (const eventResult of allEvents) {
+
+          if (eventResult.type == "Track") {
+              const eventResultsA = await getATrackAtheltesReuslts(eventResult.id, 'A');
+              events.push({
+                  name: eventResult.eventDetail_name + " A",
+                  type: eventResult.type,
+                  results: eventResultsA
+              });
+
+              const eventResultsB = await getATrackAtheltesReuslts(eventResult.id, 'B');
+              events.push({
+                  name: eventResult.eventDetail_name + " B",
+                  type: eventResult.type,
+                  results: eventResultsB
+              });
+          } else if (eventResult.type == "Field") {
+              const eventResults = await getFieldAtheltesReuslts(eventResult.id);
+              events.push({
+                  name: eventResult.eventDetail_name,
+                  type: eventResult.type,
+                  results: eventResults
+              });
+          } else if (eventResult.type == "Relay" || eventResult.type == "Paarluf") {
+              const eventResults = await getRelayAtheltesReuslts(eventResult.id);
+              console.log(eventResults);
+              events.push({
+                  name: eventResult.eventDetail_name,
+                  type: eventResult.type,
+                  results: eventResults
+              });
+
+          }
+      }
+
+      
+
+        // Render the EJS template
+        if (process.env.NODE_ENV != 'development') {
+          var templatePath = path.join(__dirname, 'template.ejs');
+        } else {
+          var templatePath = path.join('template.ejs');
+        }
+        const templateHtml = fs.readFileSync(templatePath, 'utf8');
+        const renderedHtml = ejs.render(templateHtml, { events: events, agegroup: agegroup, gender: gender, venue: "Oswestry" });
+
+        // Convert to PDF using Puppeteer
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(renderedHtml);
+        await page.pdf({ path: `pdfs/event-results${agegroup}${gender}.pdf`, format: 'A4' });
+        await browser.close();
+      }
+    }
+    
 }

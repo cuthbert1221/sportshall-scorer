@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Document</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            padding: 20px;
+            color: #333;
+            background-color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .content {
+            margin-bottom: 20px;
+        }
+        .content h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+        .avoid-page-break {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><%= agegroup %> <%= gender %> - <%= venue %></h1>
+    </div>
+    <div class="table-section">
+
+        <% 
+        function getOrdinalSuffix(i) {
+            var j = i % 10,
+                k = i % 100;
+            if (j == 1 && k != 11) {
+                return i + "st";
+            }
+            if (j == 2 && k != 12) {
+                return i + "nd";
+            }
+            if (j == 3 && k != 13) {
+                return i + "rd";
+            }
+            return i + "th";
+        }
+        %>
+
+        <% events.forEach(function(event) { %>
+            <div class="avoid-page-break">
+            <h4><%= event.name %></h4>
+            <table class="table">
+                <% if(event.type === 'track') { %>
+                    <!-- Track events: Display top 4 results -->
+                    <tr>
+                        <% event.results.slice(0, 4).forEach(function(result, index) { %>
+                            <th><%= getOrdinalSuffix(index + 1) %></th>
+                        <% }); %>
+                    </tr>
+                    <tr>
+                        <% event.results.slice(0, 4).forEach(function(result) { %>
+                            <td><%= result.fullname %> (<%= result.highest_attempt %>)</td>
+                        <% }); %>
+                    </tr>
+                <% } else { // For field events: Display all 8 results in two rows %>
+                    <tr>
+                        <% event.results.slice(0, 4).forEach(function(result, index) { %>
+                            <th><%= getOrdinalSuffix(index + 1) %></th>
+                        <% }); %>
+                    </tr>
+                    <tr>
+                        <% event.results.slice(0, 4).forEach(function(result) { %>
+                            <td><%= result.fullname %> (<%= result.highest_attempt %>)</td>
+                        <% }); %>
+                    </tr>
+                    <tr>
+                        <% event.results.slice(4, 8).forEach(function(result, index) { %>
+                            <th><%= getOrdinalSuffix(index + 5) %></th>
+                        <% }); %>
+                    </tr>
+                    <tr>
+                        <% event.results.slice(4, 8).forEach(function(result) { %>
+                            <td><%= result.fullname %> (<%= result.highest_attempt %>)</td>
+                        <% }); %>
+                    </tr>
+                <% } %>
+            </table>
+        </div>
+        <% }); %>
+    </div>
+    <div class="footer">
+        <p>Oswestry Olympians PDF generator.</p>
+    </div>
+</body>
+
+</html>

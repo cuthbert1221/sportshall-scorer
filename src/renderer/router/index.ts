@@ -17,6 +17,7 @@ import AthleteVenueResults from '../views/AthleteVenueResults.vue';
 import ClubVenueResults from '../views/ClubVenueResults.vue';
 import ClubOverallResults from '../views/ClubOverallResults.vue';
 import ViewEventTypes from '../views/ViewEventTypes.vue';
+import CreatePDFs from '../views/CreatePDFs.vue';
 
 const routes = [
   {
@@ -108,6 +109,11 @@ const routes = [
     path: '/view-event-types',
     name: 'ViewEventTypes',
     component: ViewEventTypes
+  },
+  {
+    path: '/create-pdf',
+    name: 'CreatePDFs',
+    component: CreatePDFs
   },
   // Additional routes for other components
 ];
