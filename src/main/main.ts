@@ -1078,6 +1078,22 @@ async function getVenueID(name): Promise<any> {
     db.close();
   });
 }
+async function getVenueName(id): Promise<any> {
+  const db = await openDatabase();
+  return new Promise<string>((resolve, reject) => {
+    db.all(`SELECT name FROM Venues WHERE id = ? LIMIT 1`, [id],
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve((rows[0] as { name: string }).name);  // Resolve the first row
+        }
+      }
+    );
+  }).finally(() => {
+    db.close();
+  });
+}
 
 async function getVenues(): Promise<any> {
   const db = await openDatabase();
@@ -2046,6 +2062,7 @@ async function setUpDatabase() {
   const path = require('path');
   var trackFile = path.join(__dirname, 'trackFile.csv');
   var filedFile = path.join(__dirname, 'fieldFile.csv');
+  /*
   if (process.env.NODE_ENV != 'development') {
     await processTrackEventCSV(trackFile)
     await processFieldEventCSV(filedFile)
@@ -2053,6 +2070,7 @@ async function setUpDatabase() {
     await processTrackEventCSV("trackFile.csv")
     await processFieldEventCSV("fieldFile.csv")
   } 
+  */
   await loopEventsResults()
   generatePrintableLaneAssignmentsToFile('Track', 'lane_assignments.txt', 1)
   //console.log("createPDF");
@@ -2354,7 +2372,7 @@ async function createPDF(venue: number) {
     const path = require('path');
     const agegroups = ['U11', 'U13', 'U15'];
     const genders = ['Girl', 'Boy']
-
+    const venue_name = await getVenueName(venue);
     //change
 
     for (const agegroup of agegroups) {
@@ -2407,13 +2425,13 @@ async function createPDF(venue: number) {
           var templatePath = path.join('template.ejs');
         }
         const templateHtml = fs.readFileSync(templatePath, 'utf8');
-        const renderedHtml = ejs.render(templateHtml, { events: events, agegroup: agegroup, gender: gender, venue: "Oswestry" });
+        const renderedHtml = ejs.render(templateHtml, { events: events, agegroup: agegroup, gender: gender, venue: venue_name });
 
         // Convert to PDF using Puppeteer
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
         await page.setContent(renderedHtml);
-        await page.pdf({ path: `pdfs/event-results${agegroup}${gender}.pdf`, format: 'A4' });
+        await page.pdf({ path: `pdfs/${venue_name}event-results${agegroup}${gender}.pdf`, format: 'A4' });
         await browser.close();
       }
     }
