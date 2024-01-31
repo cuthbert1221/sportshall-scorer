@@ -266,8 +266,9 @@ ipcMain.handle('fetch-data', async (event, type) => {
     TotalAthletePoints.points,
     EventSignUpCount.entry_count,
     CASE 
-        WHEN EventSignUpCount.entry_count > 0 THEN TotalAthletePoints.points / EventSignUpCount.entry_count
-        ELSE 0
+        WHEN EventSignUpCount.entry_count > 0 
+        THEN ROUND(TotalAthletePoints.points * 1.0 / EventSignUpCount.entry_count, 2)
+        ELSE 0.0
     END AS points_per_signup
 FROM Athletes 
 INNER JOIN Clubs ON Athletes.club = Clubs.id 
@@ -280,11 +281,14 @@ LEFT JOIN (
 ) AS TotalAthletePoints ON Athletes.id = TotalAthletePoints.athlete_id
 LEFT JOIN (
     SELECT 
-        athlete_id, 
+        es.athlete_id, 
         COUNT(*) as entry_count
-    FROM eventSignUps 
-    GROUP BY athlete_id
+    FROM eventSignUps es
+    INNER JOIN eventInstances ei ON es.event_id = ei.id
+    WHERE ei.eventDetail_name NOT LIKE '%Relay%' AND ei.eventDetail_name NOT LIKE '%Paarlauf%'
+    GROUP BY es.athlete_id
 ) AS EventSignUpCount ON Athletes.id = EventSignUpCount.athlete_id
+
 
     `;
   } else if (type === 'eventDetails') {
