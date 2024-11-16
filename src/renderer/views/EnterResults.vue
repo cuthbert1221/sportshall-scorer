@@ -1,25 +1,33 @@
 <template>
   <div class="p-2">
     <h1>Enter Results for Event: {{ event.name }}</h1>
-    <DataTable v-if="event.type != 'Relay' && event.type != 'Paarluf'" :value="athletes" editMode="cell" @cell-edit-complete="onCellEditComplete" showGridlines >
+    <DataTable v-if="event.type != 'Relay' && event.type != 'Paarluf'" :value="athletes" editMode="cell" @cell-edit-complete="onCellEditComplete" showGridlines>
       <Column field="athlete_name" header="Name"></Column>
       <Column field="club_name" header="Club"></Column>
       <Column field="lane" header="Lane"></Column>
       <Column field="athlete_type" header="Type">
         <template #editor="{ data, field }">
-            <InputText v-model="data[field]" />
+          <InputText v-model="data[field]" />
         </template>
       </Column>
-      <Column v-for="n in maxAttempts" :field="'attempts.' + (n-1) + '.result'" :header="header(n)" :key="n">        <template #editor="{ data, field }">
-            <InputNumber v-model.number="data.attempts[n-1].result" :maxFractionDigits="event.maxFractionDigits"/>
+      <Column v-for="n in maxAttempts" :field="'attempts.' + (n-1) + '.result'" :header="header(n)" :key="n">
+        <template #editor="{ data, field }">
+          <InputNumber v-model.number="data.attempts[n-1].result" :maxFractionDigits="event.maxFractionDigits" />
         </template>
       </Column>
-      <Column field="position" header="Position"></Column>
+      <Column field="position" header="Position">
+        <template #body="slotProps">
+          <td :class="getPositionClass(slotProps.data)">
+            {{ slotProps.data.position }}
+          </td>
+        </template>
+      </Column>
     </DataTable>
-    <DataTable v-else :value="clubs" editMode="cell" @cell-edit-complete="onCellEditCompleteRelay" showGridlines >
+    <DataTable v-else :value="clubs" editMode="cell" @cell-edit-complete="onCellEditCompleteRelay" showGridlines>
       <Column field="club_name" header="Name"></Column>
-      <Column field="time" header="Time">        <template #editor="{ data, field }">
-            <InputNumber v-model.number="data[field]" :maxFractionDigits="event.maxFractionDigits" />
+      <Column field="time" header="Time">
+        <template #editor="{ data, field }">
+          <InputNumber v-model.number="data[field]" :maxFractionDigits="event.maxFractionDigits" />
         </template>
       </Column>
     </DataTable>
@@ -28,6 +36,7 @@
     <br>
     <br>
     <Button color="red" label="Set Lanes" @click="setLanes" />
+    <Button class="ml-2" color="red" label="Rank Event" @click="rankTeamSheet" />
   </div>
 </template>
 
@@ -116,6 +125,17 @@ const rankTeamSheet = async () => {
   fetchEventDetails();
 };
 
+const getPositionClass = (data) => {
+  if (event.value.type === 'Track') {
+    if (data.athlete_type === 'A') {
+      return 'bg-light-green';
+    } else if (data.athlete_type === 'B') {
+      return 'bg-light-blue';
+    }
+  }
+  return '';
+};
+
 const setLanes = async () => {
   await window.electronAPI.setLanes(event_id.value);
 };
@@ -169,3 +189,11 @@ const onCellEditCompleteRelay = async (event) => {
 };
 
 </script>
+<style scoped>
+.bg-light-green {
+  background-color: lightgreen;
+}
+.bg-light-blue {
+  background-color: lightblue;
+}
+</style>

@@ -1339,6 +1339,7 @@ function compareAthletes(aScores, bScores, isHigherBetter) {
 // Create a new record in the EventPoints table
 async function createOrUpdateEventPoint({ eventId, athlete_id, points, venue_id }): Promise<void> {
   const db = await openDatabase();
+  console.log("athlete_id: " + athlete_id + " points: " + points);
   return new Promise<void>((resolve, reject) => {
     db.run(`
       INSERT INTO EventPoints (event_id, athlete_id, points, venue_id) 
@@ -1434,7 +1435,7 @@ async function eventPoints(eventId: number): Promise<void> {
   if (event_details.type == "Track") {
     assignScoresAndWriteToEventPointsTrack(eventPositions, score, venue_id);
   } 
-  if (event_details.type == "Relay" || event_details.type == "Paarluf") {
+  else if (event_details.type == "Relay" || event_details.type == "Paarluf") {
     console.log("scoring_type skipping: " + event_details.type);
   } 
   else {
@@ -1459,8 +1460,10 @@ async function assignScoresAndWriteToEventPointsTrack(eventPositions, score, ven
     // Assign score based on whether the athlete is A or B
     if (position.scoring_type == "A") {
       position.score = score - (position.position - 1) * 2;
+      console.log("name a: " + position.athlete_id + " score: " + position.score);
     } else if (position.scoring_type == "B") {
       position.score = score - 1 - (position.position - 1) * 2;
+      console.log("name b: " + position.athlete_id + " score: " + position.score);
     }
 
     // Write the score to EventPoints
