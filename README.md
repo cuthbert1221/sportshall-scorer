@@ -1,75 +1,144 @@
-<div align="center"> 
 
-# Electron Vue Template
-  
-<img width="794" alt="image" src="https://user-images.githubusercontent.com/32544586/222748627-ee10c9a6-70d2-4e21-b23f-001dd8ec7238.png">
+# Sportshall Scorer
 
-A simple starter template for a **Vue3** + **Electron** TypeScript based application, including **ViteJS** and **Electron Builder**.
-</div>
+**Sportshall Scorer** is an Electron + Vue application designed to manage and score sportshall track and field events in venues across the UK. It offers flexible features that cater to track, field, and relay events, making it suitable for a wide range of configurations and competition formats.
 
-## About
+---
 
-This template utilizes [ViteJS](https://vitejs.dev) for building and serving your (Vue powered) front-end process, it provides Hot Reloads (HMR) to make development fast and easy ⚡ 
+## Features
 
-Building the Electron (main) process is done with [Electron Builder](https://www.electron.build/), which makes your application easily distributable and supports cross-platform compilation 😎
+- **Athlete Management**: Add and manage athlete profiles with details like name, club, age group, and gender.
+- **Event Creation**: Define events with custom scoring methods, attempts, and participation rules.
+- **Dynamic Scoring**: Automatically rank athletes and calculate scores for individual and relay events.
+- **PDF Reporting**: Generate and export results and lane assignments in PDF format.
+- **CSV Integration**: Import athlete and event data from CSV files for easy bulk setup.
+- **Database Integration**: Uses SQLite for efficient and persistent data management.
+- **Adaptable Scoring Methods**: Supports both highest and lowest score ranking systems, including multi-attempt events.
 
-## Getting started
+---
 
-Click the green **Use this template** button on top of the repository, and clone your own newly created repository.
+## Technology Stack
 
-**Or..**
+- **Frontend**: Vue 3, PrimeVue, and Vuetify.
+- **Backend**: Electron, SQLite.
+- **Utilities**: Puppeteer (PDF generation), EJS (templating), and PapaParse (CSV parsing).
 
-Clone this repository: `git clone git@github.com:Deluze/electron-vue-template.git`
+---
 
+## Installation
 
-### Install dependencies ⏬
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/cuthbert1221/sportshall-scorer.git
+   cd sportshall-scorer
+   ```
 
-```bash
-npm install
-```
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-### Start developing ⚒️
+3. **Run the Application**:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-```
+4. **Build for Production**:
+   - Windows:
+     ```bash
+     npm run build:win
+     ```
+   - macOS:
+     ```bash
+     npm run build:mac
+     ```
+   - Linux:
+     ```bash
+     npm run build:linux
+     ```
 
-## Additional Commands
+---
 
-```bash
-npm run dev # starts application with hot reload
-npm run build # builds application, distributable files can be found in "dist" folder
+## Usage
 
-# OR
+### Athlete Management
+- Add athletes via the UI or by importing data from CSV files.
+- Assign athletes to clubs, age groups, and gender categories.
 
-npm run build:win # uses windows as build target
-npm run build:mac # uses mac as build target
-npm run build:linux # uses linux as build target
-```
+### Event Management
+- Define events with specific attributes, such as:
+  - Event type (Track, Field, Relay, or Paarlouf).
+  - Scoring method (Highest or Lowest score wins).
+  - Maximum number of attempts.
+- Set club-specific rules, like a limit on the number of participating athletes per event.
 
-Optional configuration options can be found in the [Electron Builder CLI docs](https://www.electron.build/cli.html).
-## Project Structure
+### Scoring and Reporting
+- Automatically rank participants and assign scores based on event results.
+- Generate comprehensive event result PDFs, including lane assignments and final rankings.
 
-```bash
-- scripts/ # all the scripts used to build or serve your application, change as you like.
-- src/
-  - main/ # Main thread (Electron application source)
-  - renderer/ # Renderer thread (VueJS application source)
-```
+### CSV Import
+- Import athlete and event data from `trackFile.csv` and `fieldFile.csv` for bulk setup.
+- Automatically parse and insert data into the application database.
 
-## Using static files
+---
 
-If you have any files that you want to copy over to the app directory after installation, you will need to add those files in your `src/main/static` directory.
+## Development
 
-#### Referencing static files from your main process
+### Directory Structure
+- **`src/`**: Main application source code.
+- **`renderer/`**: Vue-based frontend code.
+- **`build/`**: Compiled Electron main process code.
+- **`database/`**: SQLite database and migration scripts.
+- **`scripts/`**: Build and development server scripts.
 
-```ts
-/* Assumes src/main/static/myFile.txt exists */
+### Key Commands
+- **Run in Development Mode**:
+  ```bash
+  npm run dev
+  ```
+- **Build for Production**:
+  ```bash
+  npm run build
+  ```
+- **Build Platform-Specific Packages**:
+  ```bash
+  npm run build:win
+  npm run build:mac
+  npm run build:linux
+  ```
 
-import {app} from 'electron';
-import {join} from 'path';
-import {readFileSync} from 'fs';
+---
 
-const path = join(app.getAppPath(), 'static', 'myFile.txt');
-const buffer = readFileSync(path);
-```
+## Contribution
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a new feature branch:
+   ```bash
+   git checkout -b feature-name
+   ```
+3. Make your changes and commit them:
+   ```bash
+   git commit -m "Add feature-name"
+   ```
+4. Push to your fork and open a pull request:
+   ```bash
+   git push origin feature-name
+   ```
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Support
+
+If you encounter issues or have feature requests, please open an issue in the [GitHub repository](https://github.com/cuthbert1221/sportshall-scorer/issues).
+
+---
+
+**Sportshall Scorer** – Making sports events seamless, one score at a time! 🏅
