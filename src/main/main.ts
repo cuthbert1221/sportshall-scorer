@@ -978,19 +978,20 @@ async function getRelaySignupsResults(eventId, number): Promise<any> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     db.all(`
-        SELECT EventSignUps.club_id, 
-              Clubs.name AS club_name, 
-              CAST(EventRelayAttempts.result AS INTEGER) AS time
-        FROM EventSignUps
-        INNER JOIN Clubs 
-            ON EventSignUps.club_id = Clubs.id
-        INNER JOIN EventRelayAttempts 
-            ON EventSignUps.club_id = EventRelayAttempts.club_id 
-          AND EventSignUps.event_id = EventRelayAttempts.event_id
-        WHERE EventSignUps.event_id = ?
-        GROUP BY EventSignUps.club_id
-        HAVING COUNT(DISTINCT EventSignUps.athlete_id) = ?
-        ORDER BY CAST(EventRelayAttempts.result AS INTEGER) ASC;
+SELECT EventSignUps.club_id, 
+       Clubs.name AS club_name, 
+       CAST(EventRelayAttempts.result AS NUMERIC) AS time
+FROM EventSignUps
+INNER JOIN Clubs 
+    ON EventSignUps.club_id = Clubs.id
+INNER JOIN EventRelayAttempts 
+    ON EventSignUps.club_id = EventRelayAttempts.club_id 
+   AND EventSignUps.event_id = EventRelayAttempts.event_id
+WHERE EventSignUps.event_id = 106
+GROUP BY EventSignUps.club_id, Clubs.name, EventRelayAttempts.result
+HAVING COUNT(DISTINCT EventSignUps.athlete_id) = 4
+ORDER BY EventRelayAttempts.result ASC;
+
     `, [eventId, number],
       (err, rows) => {
         if (err) {

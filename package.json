@@ -1,6 +1,6 @@
 {
   "name": "sportshall-scorer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A minimal Electron + Vue application",
   "main": "build/main/main.js",
   "scripts": {
