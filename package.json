@@ -1,6 +1,6 @@
 {
   "name": "sportshall-scorer",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A minimal Electron + Vue application",
   "main": "build/main/main.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "name": "cuthbert1221",
     "url": "https://github.com/cuthbert1221"
   },
+
   "devDependencies": {
     "@mdi/font": "^7.3.67",
     "@types/sqlite3": "^3.1.11",
@@ -43,6 +44,7 @@
     "vue": "^3.2.47",
     "vue-router": "^4.2.5",
     "vuelidate": "^0.7.7",
-    "vuetify": "^3.0.1"
+    "vuetify": "^3.0.1",
+    "ansi-styles": "3.2.1"
   }
 }

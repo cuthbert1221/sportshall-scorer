@@ -100,12 +100,12 @@
                         <% }); %>
                     </tr>
                     <tr>
-                        <% event.results.slice(4, 8).forEach(function(result, index) { %>
+                        <% event.results.slice(4, 12).forEach(function(result, index) { %>
                             <th><%= getOrdinalSuffix(index + 5) %></th>
                         <% }); %>
                     </tr>
                     <tr>
-                        <% event.results.slice(4, 8).forEach(function(result) { %>
+                        <% event.results.slice(4, 12).forEach(function(result) { %>
                             <td><%= result.fullname %> (<%= result.highest_attempt %>)</td>
                         <% }); %>
                     </tr>
