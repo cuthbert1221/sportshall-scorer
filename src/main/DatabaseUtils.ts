@@ -246,7 +246,7 @@ export async function insertClubsAndVenues(DB_PATH) {
 
 
     // Data for clubs and venues
-    const clubs = ['Oswestry', 'Shrewsbury', 'Wenlock', 'Telford'];
+    const clubs = ['Oswestry', 'Shrewsbury', 'Much Wenlock', 'Telford'];
     const venues = [
       { name: 'Venue 1', date: '2022-01-01' },
       { name: 'Venue 2', date: '2022-02-01' },
@@ -273,10 +273,12 @@ export async function insertClubsAndVenues(DB_PATH) {
         console.log(`Club ${club} inserted or already exists.`);
     }
 
+    /*
     for (const venue of venues) {
         await runSql(`INSERT OR IGNORE INTO Venues (name, date) VALUES (?, ?)`, [venue.name, venue.date]);
         console.log(`Venue ${venue.name} inserted or already exists.`);
     }
+    */
 
     // Close the database connection
     return new Promise<void>((resolve, reject) => {
